@@ -1,0 +1,49 @@
+DEVKITPRO ?= /opt/devkitpro
+DEVKITPPC ?= $(DEVKITPRO)/devkitPPC
+
+PREFIX := $(DEVKITPPC)/bin/powerpc-eabi-
+CC := $(PREFIX)gcc
+CXX := $(PREFIX)g++
+AS := $(PREFIX)gcc
+ELF2DOL := $(DEVKITPRO)/tools/bin/elf2dol
+
+TARGET := build/gamecube/glitchcraft
+SOURCES := src/engine.cpp \
+           gamecube/src/main.cpp \
+           GameEngine/platform/gamecube/gx_renderer.cpp \
+           GameEngine/platform/powerpc/voxel_kernels.S
+OBJECTS := $(patsubst %.cpp,$(TARGET)/%.o,$(filter %.cpp,$(SOURCES))) \
+           $(patsubst %.S,$(TARGET)/%.o,$(filter %.S,$(SOURCES)))
+INCLUDES := -Iinclude -Isrc -IGameEngine/include \
+            -I$(DEVKITPRO)/libogc/include
+ARCH := -mogc -mcpu=750 -meabi -mhard-float
+CFLAGS := -DGEKKO -D__gamecube__ -g -O2 -Wall -Wextra $(ARCH) \
+          -ffunction-sections -fdata-sections $(INCLUDES)
+CXXFLAGS := $(CFLAGS) -std=gnu++17 -fno-rtti
+LDFLAGS := $(ARCH) -Wl,--gc-sections
+LIBS := -L$(DEVKITPRO)/libogc/lib/cube -logc -lm
+
+.PHONY: all clean check-sdk
+
+all: check-sdk $(TARGET).dol
+
+check-sdk:
+	@test -x "$(CXX)" || (echo "devkitPPC not found: install devkitPro gamecube-dev." >&2; exit 1)
+	@test -f "$(DEVKITPRO)/libogc/include/gccore.h" || (echo "libogc GX headers not found." >&2; exit 1)
+
+$(TARGET).dol: $(TARGET).elf
+	$(ELF2DOL) $< $@
+
+$(TARGET).elf: $(OBJECTS)
+	$(CXX) $(LDFLAGS) -Wl,-Map,$(TARGET).map -o $@ $^ $(LIBS)
+
+$(TARGET)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(TARGET)/%.o: %.S
+	@mkdir -p $(dir $@)
+	$(AS) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf build/gamecube

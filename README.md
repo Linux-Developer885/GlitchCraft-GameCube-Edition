@@ -125,3 +125,4 @@ should still be tested in Dolphin or on hardware.
 devkitPro/libogc is an open-source homebrew toolchain, not Nintendo's
 proprietary official SDK. This is an original GX-based block-world renderer,
 not Mojang's game engine or a recreation of proprietary Xbox 360 assets.
+ALSO! YOU MUST BURN THE DOL FILE TO A SMALL GAMECUBE EMPTY DISK!

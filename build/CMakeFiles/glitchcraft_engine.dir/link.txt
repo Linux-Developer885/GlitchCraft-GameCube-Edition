@@ -1,0 +1,2 @@
+/usr/bin/ar qc libglitchcraft_engine.a CMakeFiles/glitchcraft_engine.dir/src/engine.cpp.o CMakeFiles/glitchcraft_engine.dir/src/c_api.cpp.o CMakeFiles/glitchcraft_engine.dir/src/realms.cpp.o CMakeFiles/glitchcraft_engine.dir/src/portable_math.c.o CMakeFiles/glitchcraft_engine.dir/GameEngine/src/renderer.cpp.o CMakeFiles/glitchcraft_engine.dir/GameEngine/src/window.cpp.o CMakeFiles/glitchcraft_engine.dir/GameEngine/src/voxel_kernels.c.o
+/usr/bin/ranlib libglitchcraft_engine.a

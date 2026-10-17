@@ -1,0 +1,6 @@
+/workspaces/GlitchCraft-GameCube-Edition/build/CMakeFiles/glitchcraft_engine.dir
+/workspaces/GlitchCraft-GameCube-Edition/build/CMakeFiles/glitchcraft.dir
+/workspaces/GlitchCraft-GameCube-Edition/build/CMakeFiles/glitchcraft_tests.dir
+/workspaces/GlitchCraft-GameCube-Edition/build/CMakeFiles/test.dir
+/workspaces/GlitchCraft-GameCube-Edition/build/CMakeFiles/edit_cache.dir
+/workspaces/GlitchCraft-GameCube-Edition/build/CMakeFiles/rebuild_cache.dir

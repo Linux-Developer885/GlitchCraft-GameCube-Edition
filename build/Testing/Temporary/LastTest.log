@@ -1,0 +1,19 @@
+Start testing: Oct 13 22:49 UTC
+----------------------------------------------------------
+1/1 Testing: glitchcraft_engine_tests
+1/1 Test: glitchcraft_engine_tests
+Command: "/workspaces/GlitchCraft-GameCube-Edition/build/glitchcraft_tests"
+Directory: /workspaces/GlitchCraft-GameCube-Edition/build
+"glitchcraft_engine_tests" start time: Oct 13 22:49 UTC
+Output:
+----------------------------------------------------------
+All engine tests passed
+<end of output>
+Test time =   0.55 sec
+----------------------------------------------------------
+Test Passed.
+"glitchcraft_engine_tests" end time: Oct 13 22:49 UTC
+"glitchcraft_engine_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 13 22:49 UTC

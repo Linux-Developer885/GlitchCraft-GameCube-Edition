@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o -o glitchcraft_tests  libglitchcraft_engine.a /usr/lib/x86_64-linux-gnu/libX11.so /usr/lib/x86_64-linux-gnu/libXext.so 

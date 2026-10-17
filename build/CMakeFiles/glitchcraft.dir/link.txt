@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/glitchcraft.dir/src/main.cpp.o CMakeFiles/glitchcraft.dir/src/console.cpp.o -o glitchcraft  libglitchcraft_engine.a /usr/lib/x86_64-linux-gnu/libX11.so /usr/lib/x86_64-linux-gnu/libXext.so 

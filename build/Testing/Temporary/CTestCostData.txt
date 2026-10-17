@@ -1,2 +1,3 @@
-glitchcraft_engine_tests 20 0.027306
+glitchcraft_engine_tests 31 0.0175713
+glitchcraft_gamecube_image_tests 4 0.0212382
 ---

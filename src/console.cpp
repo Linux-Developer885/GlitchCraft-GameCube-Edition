@@ -1,4 +1,6 @@
 #include "console.hpp"
+#include "GameEngine/vehicles.hpp"
+#include "glitchcraft/version.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -30,6 +32,30 @@ const char *blockColor(GcBlock block)
     case GC_BLOCK_WATER: return "\033[38;5;39m";
     case GC_BLOCK_LAVA: return "\033[38;5;202m";
     case GC_BLOCK_REDSTONE: return "\033[38;5;196m";
+    case GC_BLOCK_SHULKER_WHITE: return "\033[38;5;255m";
+    case GC_BLOCK_SHULKER_ORANGE: return "\033[38;5;208m";
+    case GC_BLOCK_SHULKER_MAGENTA: return "\033[38;5;170m";
+    case GC_BLOCK_SHULKER_LIGHT_BLUE: return "\033[38;5;117m";
+    case GC_BLOCK_SHULKER_YELLOW: return "\033[38;5;226m";
+    case GC_BLOCK_SHULKER_LIME: return "\033[38;5;118m";
+    case GC_BLOCK_SHULKER_PINK: return "\033[38;5;211m";
+    case GC_BLOCK_SHULKER_GRAY: return "\033[38;5;244m";
+    case GC_BLOCK_SHULKER_LIGHT_GRAY: return "\033[38;5;250m";
+    case GC_BLOCK_SHULKER_CYAN: return "\033[38;5;44m";
+    case GC_BLOCK_SHULKER_PURPLE: return "\033[38;5;135m";
+    case GC_BLOCK_SHULKER_BLUE: return "\033[38;5;63m";
+    case GC_BLOCK_SHULKER_BROWN: return "\033[38;5;130m";
+    case GC_BLOCK_SHULKER_GREEN: return "\033[38;5;64m";
+    case GC_BLOCK_SHULKER_RED: return "\033[38;5;160m";
+    case GC_BLOCK_SHULKER_BLACK: return "\033[38;5;232m";
+    case GC_BLOCK_ASPHALT:
+    case GC_BLOCK_ROAD_STRAIGHT:
+    case GC_BLOCK_ROAD_CURVE:
+    case GC_BLOCK_ROAD_T_INTERSECTION:
+    case GC_BLOCK_ROAD_CROSS_INTERSECTION:
+    case GC_BLOCK_ROAD_DEAD_END:
+    case GC_BLOCK_ROAD_ROUNDABOUT:
+        return "\033[38;5;240m";
     default: return "\033[0m";
     }
 }
@@ -243,7 +269,9 @@ void Console::drawTextScreen(const std::string &title,
 {
     clear();
     std::cout << "============================================================\n"
-              << "              GLITCHCRAFT: GAMECUBE EDITION\n"
+              << "       GLITCHCRAFT: GAMECUBE EDITION - "
+              << glitchcraft::kReleaseStage << " "
+              << glitchcraft::kVersion << "\n"
               << "============================================================\n\n"
               << title << "\n\n" << body << "\n\n" << footer << '\n';
     std::cout.flush();
@@ -253,19 +281,20 @@ void Console::drawTitle()
 {
     drawTextScreen("A block-built world awaits.",
                    "  [Enter]  Singleplayer\n"
-                   "  [M]      GlitchCraft Realms (coming soon)\n"
+                   "  [M]      GlitchCraft Realms (LAN host/join)\n"
                    "  [Q]      Quit\n\n"
-                   "An original voxel sandbox prototype. Not affiliated with Mojang.",
+                   "Stable release 1.0.0: the listed game systems are available.\n"
+                   "An original voxel sandbox; not affiliated with Mojang.",
                    "Choose an option.");
 }
 
 void Console::drawTerms()
 {
     drawTextScreen("Terms of Service",
-                   "This early prototype is provided as-is. Worlds are stored only\n"
+                   "This release is provided as-is. Worlds are stored only\n"
                    "in memory. Optional LAN sessions connect directly to a host;\n"
                    "there are no accounts, cloud saves, or voice chat.\n"
-                   "Use at your own discretion. Accept to continue.",
+                   "Accept to continue.",
                    "[Y] Accept and remember   [N] Decline and quit");
 }
 
@@ -284,11 +313,13 @@ void Console::drawRealms()
                    "Private multiplayer hosted on your local network.\n"
                    "Host a world or join using the host's IPv4 address.\n"
                    "TCP port 28777 must be reachable on your LAN.\n"
-                   "This prototype does not use accounts or cloud servers.",
+                   "This game does not use accounts or cloud servers.",
                    "[H] Host a world   [J] Join a world   [Enter] Return");
 }
 
-void Console::drawInventory(GcBlock selected, int foodLevel)
+void Console::drawInventory(GcBlock selected, int foodLevel,
+                            GcTrackType selectedTrack,
+                            GcVehicleType selectedVehicle, int buildMode)
 {
     const char *selectedName = "Grass";
     switch (selected) {
@@ -298,17 +329,82 @@ void Console::drawInventory(GcBlock selected, int foodLevel)
     case GC_BLOCK_REDSTONE: selectedName = "Redstone"; break;
     case GC_BLOCK_WATER: selectedName = "Water"; break;
     case GC_BLOCK_LAVA: selectedName = "Lava"; break;
+    case GC_BLOCK_SHULKER_WHITE: selectedName = "White Shulker Box"; break;
+    case GC_BLOCK_SHULKER_ORANGE: selectedName = "Orange Shulker Box"; break;
+    case GC_BLOCK_SHULKER_MAGENTA: selectedName = "Magenta Shulker Box"; break;
+    case GC_BLOCK_SHULKER_LIGHT_BLUE: selectedName = "Light Blue Shulker Box"; break;
+    case GC_BLOCK_SHULKER_YELLOW: selectedName = "Yellow Shulker Box"; break;
+    case GC_BLOCK_SHULKER_LIME: selectedName = "Lime Shulker Box"; break;
+    case GC_BLOCK_SHULKER_PINK: selectedName = "Pink Shulker Box"; break;
+    case GC_BLOCK_SHULKER_GRAY: selectedName = "Gray Shulker Box"; break;
+    case GC_BLOCK_SHULKER_LIGHT_GRAY: selectedName = "Light Gray Shulker Box"; break;
+    case GC_BLOCK_SHULKER_CYAN: selectedName = "Cyan Shulker Box"; break;
+    case GC_BLOCK_SHULKER_PURPLE: selectedName = "Purple Shulker Box"; break;
+    case GC_BLOCK_SHULKER_BLUE: selectedName = "Blue Shulker Box"; break;
+    case GC_BLOCK_SHULKER_BROWN: selectedName = "Brown Shulker Box"; break;
+    case GC_BLOCK_SHULKER_GREEN: selectedName = "Green Shulker Box"; break;
+    case GC_BLOCK_SHULKER_RED: selectedName = "Red Shulker Box"; break;
+    case GC_BLOCK_SHULKER_BLACK: selectedName = "Black Shulker Box"; break;
+    case GC_BLOCK_ASPHALT: selectedName = "Asphalt"; break;
+    case GC_BLOCK_ROAD_STRAIGHT: selectedName = "Straight Road"; break;
+    case GC_BLOCK_ROAD_CURVE: selectedName = "Curved Road"; break;
+    case GC_BLOCK_ROAD_T_INTERSECTION: selectedName = "T-Intersection Road"; break;
+    case GC_BLOCK_ROAD_CROSS_INTERSECTION:
+        selectedName = "Cross-Intersection Road";
+        break;
+    case GC_BLOCK_ROAD_DEAD_END: selectedName = "Dead-End Road"; break;
+    case GC_BLOCK_ROAD_ROUNDABOUT: selectedName = "Roundabout Road"; break;
     default: break;
     }
+    const std::string selectedItem = buildMode == 2
+        ? "Selected vehicle: " + gameengine::vehicleName(selectedVehicle)
+        : buildMode == 1
+            ? "Selected track: " + std::to_string(selectedTrack)
+            : "Selected block: " + std::string(selectedName);
     drawTextScreen("Inventory",
-                   "Selected block: " + std::string(selectedName) +
-                       "  |  Food: " + std::to_string(foodLevel) + "/100\n"
+                   selectedItem + "  |  Food: " +
+                       std::to_string(foodLevel) + "/100\n"
                        "Blocks: G grass, D dirt, S stone, W wood, T redstone,\n"
                        "        U water, V lava (not drinkable)\n"
+                       "Cycle selected block with [ / ], including all 16 shulker colors.\n"
                        "Items: 1 potion, 2 milk\n"
                        "Food: 3 cake, 4 cookie, 5 crackers, 6 sandwich,\n"
                        "      7 spaghetti, 8 pizza, 9 cotton candy",
                    "[B] or [X] Close");
+}
+
+void Console::drawShulker(GcBlock selected, int activeSlot,
+                          const ShulkerStack &stack)
+{
+    static const char *blockNames[]{
+        "Air", "Grass", "Dirt", "Stone", "Wood", "Water", "Lava",
+        "Redstone", "White Shulker", "Orange Shulker", "Magenta Shulker",
+        "Light Blue Shulker", "Yellow Shulker", "Lime Shulker",
+        "Pink Shulker", "Gray Shulker", "Light Gray Shulker",
+        "Cyan Shulker", "Purple Shulker", "Blue Shulker", "Brown Shulker",
+        "Green Shulker", "Red Shulker", "Black Shulker", "Asphalt",
+        "Straight Road", "Curved Road", "T-Intersection Road",
+        "Cross-Intersection Road", "Dead-End Road", "Roundabout Road"};
+    const int selectedIndex = static_cast<int>(selected);
+    const int stackIndex = static_cast<int>(stack.block);
+    const std::string item = stack.count > 0 && stackIndex >= 0 &&
+            stackIndex < static_cast<int>(sizeof(blockNames) /
+                                         sizeof(blockNames[0]))
+        ? blockNames[stackIndex] + std::string(" x") +
+              std::to_string(stack.count)
+        : "Empty";
+    drawTextScreen(
+        "Shulker Box",
+        "Slot " + std::to_string(activeSlot + 1) + "/27: " + item + "\n"
+        "Selected item: " +
+            (selectedIndex >= 0 &&
+                     selectedIndex < static_cast<int>(sizeof(blockNames) /
+                                                      sizeof(blockNames[0]))
+                 ? std::string(blockNames[selectedIndex])
+                 : std::string("Unknown")) +
+            "\n[ / ] choose slot   Y store 64 selected blocks   N clear slot\n"
+            "X or B close. Shulker contents are kept in this world session.",
+        "Container");
 }
 
 void Console::drawPaused()

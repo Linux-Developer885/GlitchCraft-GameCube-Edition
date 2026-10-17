@@ -8,6 +8,7 @@ CMakeFiles/glitchcraft.dir/src/console.cpp.o: /workspaces/GlitchCraft-GameCube-E
   /usr/include/asm-generic/ioctl.h \
   /usr/include/asm-generic/ioctls.h \
   /usr/include/c++/13/algorithm \
+  /usr/include/c++/13/array \
   /usr/include/c++/13/backward/binders.h \
   /usr/include/c++/13/bit \
   /usr/include/c++/13/bits/algorithmfwd.h \
@@ -90,6 +91,7 @@ CMakeFiles/glitchcraft.dir/src/console.cpp.o: /workspaces/GlitchCraft-GameCube-E
   /usr/include/c++/13/chrono \
   /usr/include/c++/13/clocale \
   /usr/include/c++/13/cmath \
+  /usr/include/c++/13/compare \
   /usr/include/c++/13/cstddef \
   /usr/include/c++/13/cstdint \
   /usr/include/c++/13/cstdio \
@@ -282,7 +284,9 @@ CMakeFiles/glitchcraft.dir/src/console.cpp.o: /workspaces/GlitchCraft-GameCube-E
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h \
+  /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/vehicles.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/game_api.h \
+  /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/version.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/src/console.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/src/engine.hpp
 
@@ -291,6 +295,7 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
   /usr/include/c++/13/algorithm \
+  /usr/include/c++/13/array \
   /usr/include/c++/13/backward/auto_ptr.h \
   /usr/include/c++/13/backward/binders.h \
   /usr/include/c++/13/bit \
@@ -392,6 +397,7 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
   /usr/include/c++/13/chrono \
   /usr/include/c++/13/clocale \
   /usr/include/c++/13/codecvt \
+  /usr/include/c++/13/compare \
   /usr/include/c++/13/cstddef \
   /usr/include/c++/13/cstdint \
   /usr/include/c++/13/cstdio \
@@ -544,6 +550,7 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h \
   /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/renderer.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/textures.hpp \
+  /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/vehicles.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/window.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/game_api.h \
   /workspaces/GlitchCraft-GameCube-Edition/src/console.hpp \
@@ -613,6 +620,8 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /workspaces/GlitchCraft-GameCube-Edition/src/console.hpp:
 
+/workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/version.hpp:
+
 /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/game_api.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h:
@@ -651,11 +660,7 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h:
 
-/usr/include/c++/13/tr1/ell_integral.tcc:
-
-/usr/include/c++/13/tr1/exp_integral.tcc:
-
-/usr/include/c++/13/system_error:
+/usr/include/x86_64-linux-gnu/bits/wchar.h:
 
 /usr/include/c++/13/ratio:
 
@@ -747,6 +752,8 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/x86_64-linux-gnu/bits/errno.h:
 
+/workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/vehicles.hpp:
+
 /usr/include/c++/13/bits/uses_allocator.h:
 
 /usr/include/c++/13/bits/postypes.h:
@@ -777,6 +784,14 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/c++/13/bits/stl_tempbuf.h:
 
+/usr/include/c++/13/system_error:
+
+/usr/include/c++/13/compare:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:
+
+/usr/include/asm-generic/errno.h:
+
 /usr/include/c++/13/bits/functexcept.h:
 
 /usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
@@ -793,33 +808,21 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/c++/13/cstddef:
 
-/usr/include/x86_64-linux-gnu/bits/long-double.h:
+/usr/include/c++/13/tr1/bessel_function.tcc:
 
-/usr/include/c++/13/bits/algorithmfwd.h:
+/usr/include/c++/13/initializer_list:
 
-/usr/include/x86_64-linux-gnu/bits/fp-logb.h:
-
-/usr/include/c++/13/bits/sstream.tcc:
-
-/usr/include/asm-generic/ioctls.h:
-
-/usr/include/c++/13/bits/locale_facets.h:
-
-/usr/include/c++/13/ext/alloc_traits.h:
-
-/usr/include/c++/13/new:
-
-/usr/include/c++/13/bits/alloc_traits.h:
-
-/usr/include/c++/13/bits/concept_check.h:
-
-/usr/include/x86_64-linux-gnu/bits/termios-c_lflag.h:
+/usr/include/c++/13/bits/std_thread.h:
 
 /usr/include/c++/13/bits/exception_ptr.h:
 
 /usr/include/c++/13/bits/locale_conv.h:
 
 /usr/include/c++/13/bits/istream.tcc:
+
+/usr/include/x86_64-linux-gnu/bits/termios-c_oflag.h:
+
+/usr/include/c++/13/bits/erase_if.h:
 
 /usr/include/c++/13/bits/cxxabi_forced.h:
 
@@ -834,6 +837,16 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 /usr/include/x86_64-linux-gnu/bits/types.h:
 
 /usr/include/c++/13/bits/move.h:
+
+/usr/include/c++/13/bits/locale_facets.h:
+
+/usr/include/c++/13/bits/sstream.tcc:
+
+/usr/include/asm-generic/ioctls.h:
+
+/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
+
+/usr/include/c++/13/bits/exception_defines.h:
 
 /usr/include/c++/13/bits/localefwd.h:
 
@@ -851,14 +864,6 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /workspaces/GlitchCraft-GameCube-Edition/src/console.cpp:
 
-/usr/include/c++/13/backward/binders.h:
-
-/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
-
-/usr/include/c++/13/bits/string_view.tcc:
-
-/usr/include/c++/13/bits/locale_facets.tcc:
-
 /usr/include/c++/13/bits/enable_special_members.h:
 
 /usr/include/c++/13/bits/allocated_ptr.h:
@@ -866,6 +871,14 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 /usr/include/c++/13/bit:
 
 /usr/include/c++/13/bits/basic_string.tcc:
+
+/usr/include/c++/13/backward/binders.h:
+
+/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
+
+/usr/include/c++/13/bits/string_view.tcc:
+
+/usr/include/c++/13/bits/locale_facets.tcc:
 
 /usr/include/x86_64-linux-gnu/sys/select.h:
 
@@ -893,6 +906,22 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/x86_64-linux-gnu/bits/time64.h:
 
+/usr/include/x86_64-linux-gnu/bits/long-double.h:
+
+/usr/include/c++/13/bits/algorithmfwd.h:
+
+/usr/include/x86_64-linux-gnu/bits/fp-logb.h:
+
+/usr/include/c++/13/ext/alloc_traits.h:
+
+/usr/include/c++/13/new:
+
+/usr/include/c++/13/bits/alloc_traits.h:
+
+/usr/include/c++/13/bits/concept_check.h:
+
+/usr/include/x86_64-linux-gnu/bits/termios-c_lflag.h:
+
 /usr/include/asm-generic/ioctl.h:
 
 /usr/include/alloca.h:
@@ -902,6 +931,8 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 /usr/include/c++/13/algorithm:
 
 /usr/include/features-time64.h:
+
+/usr/include/c++/13/array:
 
 /usr/include/c++/13/bits/stl_iterator_base_funcs.h:
 
@@ -949,6 +980,10 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/c++/13/bits/node_handle.h:
 
+/usr/include/x86_64-linux-gnu/bits/termios-tcflow.h:
+
+/usr/include/c++/13/bits/basic_string.h:
+
 /usr/include/c++/13/tr1/poly_laguerre.tcc:
 
 /usr/include/c++/13/bits/chrono.h:
@@ -965,15 +1000,9 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
 
-/usr/include/c++/13/tr1/bessel_function.tcc:
+/usr/include/c++/13/tr1/ell_integral.tcc:
 
-/usr/include/c++/13/initializer_list:
-
-/usr/include/c++/13/bits/std_thread.h:
-
-/usr/include/c++/13/bits/erase_if.h:
-
-/usr/include/x86_64-linux-gnu/bits/termios-c_oflag.h:
+/usr/include/c++/13/tr1/exp_integral.tcc:
 
 /usr/include/c++/13/bits/range_access.h:
 
@@ -984,10 +1013,6 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 /usr/include/c++/13/tr1/legendre_function.tcc:
 
 /usr/include/c++/13/tr1/modified_bessel_func.tcc:
-
-/usr/include/c++/13/bits/exception_defines.h:
-
-/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
 
 /usr/include/c++/13/tr1/poly_hermite.tcc:
 
@@ -1141,14 +1166,6 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 
 /usr/include/x86_64-linux-gnu/bits/termios-misc.h:
 
-/usr/include/c++/13/bits/basic_string.h:
-
-/usr/include/x86_64-linux-gnu/bits/termios-tcflow.h:
-
-/usr/include/asm-generic/errno.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:
-
 /usr/include/x86_64-linux-gnu/bits/termios.h:
 
 /usr/include/x86_64-linux-gnu/bits/select.h:
@@ -1178,8 +1195,6 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o: /workspaces/GlitchCraft-GameCube-Edit
 /usr/include/c++/13/sstream:
 
 /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h:
-
-/usr/include/x86_64-linux-gnu/bits/wchar.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/locale_t.h:
 

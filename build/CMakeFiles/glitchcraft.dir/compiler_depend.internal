@@ -9,6 +9,7 @@ CMakeFiles/glitchcraft.dir/src/console.cpp.o
  /usr/include/asm-generic/ioctl.h
  /usr/include/asm-generic/ioctls.h
  /usr/include/c++/13/algorithm
+ /usr/include/c++/13/array
  /usr/include/c++/13/backward/binders.h
  /usr/include/c++/13/bit
  /usr/include/c++/13/bits/algorithmfwd.h
@@ -91,6 +92,7 @@ CMakeFiles/glitchcraft.dir/src/console.cpp.o
  /usr/include/c++/13/chrono
  /usr/include/c++/13/clocale
  /usr/include/c++/13/cmath
+ /usr/include/c++/13/compare
  /usr/include/c++/13/cstddef
  /usr/include/c++/13/cstdint
  /usr/include/c++/13/cstdio
@@ -283,7 +285,9 @@ CMakeFiles/glitchcraft.dir/src/console.cpp.o
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
+ /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/vehicles.hpp
  /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/game_api.h
+ /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/version.hpp
  /workspaces/GlitchCraft-GameCube-Edition/src/console.hpp
  /workspaces/GlitchCraft-GameCube-Edition/src/engine.hpp
 
@@ -293,6 +297,7 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o
  /usr/include/asm-generic/errno-base.h
  /usr/include/asm-generic/errno.h
  /usr/include/c++/13/algorithm
+ /usr/include/c++/13/array
  /usr/include/c++/13/backward/auto_ptr.h
  /usr/include/c++/13/backward/binders.h
  /usr/include/c++/13/bit
@@ -394,6 +399,7 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o
  /usr/include/c++/13/chrono
  /usr/include/c++/13/clocale
  /usr/include/c++/13/codecvt
+ /usr/include/c++/13/compare
  /usr/include/c++/13/cstddef
  /usr/include/c++/13/cstdint
  /usr/include/c++/13/cstdio
@@ -546,6 +552,7 @@ CMakeFiles/glitchcraft.dir/src/main.cpp.o
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
  /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/renderer.hpp
  /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/textures.hpp
+ /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/vehicles.hpp
  /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/window.hpp
  /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/game_api.h
  /workspaces/GlitchCraft-GameCube-Edition/src/console.hpp

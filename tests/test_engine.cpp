@@ -2,6 +2,7 @@
 #include "glitchcraft/game_api.h"
 #include "GameEngine/renderer.hpp"
 #include "GameEngine/textures.hpp"
+#include "GameEngine/vehicles.hpp"
 #include "GameEngine/voxel_kernels.h"
 #include "realms.hpp"
 
@@ -11,6 +12,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <iterator>
 #include <sstream>
 #include <thread>
 
@@ -135,6 +137,36 @@ int main()
                     hasTextureDetail = true;
                     break;
                 }
+                glitchcraft::Game shulkerWorld(1234U);
+                for (int color = GC_BLOCK_SHULKER_WHITE;
+                     color <= GC_BLOCK_SHULKER_BLACK; ++color) {
+                    const GcBlock box = static_cast<GcBlock>(color);
+                    const int x = color * 3;
+                    check(shulkerWorld.applyBlockEdit(x, 20, 30, box) &&
+                              shulkerWorld.isShulkerBox(x, 20, 30),
+                          "each colored shulker box can be placed in the world");
+                    glitchcraft::ShulkerStack slot;
+                    check(shulkerWorld.getShulkerSlot(x, 20, 30, 0, slot) &&
+                              slot.block == GC_BLOCK_AIR && slot.count == 0,
+                          "new shulker boxes have 27 empty storage slots");
+                    check(shulkerWorld.setShulkerSlot(x, 20, 30, 0, GC_BLOCK_STONE, 64) &&
+                              shulkerWorld.getShulkerSlot(x, 20, 30, 0, slot) &&
+                              slot.block == GC_BLOCK_STONE && slot.count == 64,
+                          "shulker boxes store a stack of blocks");
+                    check(!shulkerWorld.getShulkerSlot(x, 20, 30, 27, slot) &&
+                              !shulkerWorld.setShulkerSlot(
+                                  x, 20, 30, 0, GC_BLOCK_STONE, 65),
+                          "shulker storage rejects invalid slots and stack sizes");
+                    const auto texture = glitchcraft::gameengine::blockTexture(
+                        box, 0, 1, 0);
+                    check(glitchcraft::gameengine::sampleTexture(texture, 8, 8).red !=
+                              glitchcraft::gameengine::sampleTexture(texture, 0, 0).red,
+                          "each shulker color uses a textured box material");
+                    check(shulkerWorld.applyBlockEdit(x, 20, 30, GC_BLOCK_AIR) &&
+                              !shulkerWorld.isShulkerBox(x, 20, 30) &&
+                              !shulkerWorld.getShulkerSlot(x, 20, 30, 0, slot),
+                          "removing a shulker box removes its contents");
+                }
             }
         }
         check(hasTextureDetail,
@@ -216,11 +248,23 @@ int main()
           "targeted diesel locomotive accepts compatible fuel");
     check(!railGame.vehicles().empty() && railGame.vehicles()[0].fuel == 350,
           "refueling increases locomotive fuel");
+    check(!railGame.loadTrainFuel(GC_TRAIN_FUEL_OIL, 100),
+          "diesel locomotives reject oil");
+    check(railGame.loadTrainFuel(GC_TRAIN_FUEL_DIESEL, 10000) &&
+              railGame.vehicles()[0].fuel == 1000,
+          "fuel loading clamps safely to the 1000-unit tank capacity");
+    check(!railGame.loadTrainFuel(GC_TRAIN_FUEL_DIESEL, 1),
+          "full tanks reject additional fuel");
+    check(!railGame.loadTrainFuel(GC_TRAIN_FUEL_DIESEL, -1),
+          "fuel loading rejects non-positive quantities");
     railGame.toggleTrainPower();
     check(!railGame.vehicles().empty() && railGame.vehicles()[0].powered,
           "train power can be toggled on");
     check(!railGame.mineBlock(),
           "occupied rail cannot be mined");
+    check(!railGame.removeTrackAt(railHit.position.x, railHit.position.y,
+                                  railHit.position.z),
+          "track API cannot remove rail under rolling stock");
 
     for (int type = GC_TRACK_STRAIGHT; type < GC_TRACK_COUNT; ++type) {
         glitchcraft::Game trackTypeGame(1234U);
@@ -233,14 +277,92 @@ int main()
             vehicleTypeGame.placeTrack(GC_TRACK_STRAIGHT, true) &&
             vehicleTypeGame.placeVehicle(static_cast<GcVehicleType>(type));
         check(placed,
-              "every locomotive, tender, and freight car can be placed on rail");
+              "every locomotive, tender, coach, and freight car can be placed on rail");
         if (placed && type == GC_VEHICLE_BIG_BOY_TENDER) {
             check(vehicleTypeGame.vehicles()[0].fuelType == GC_TRAIN_FUEL_OIL &&
                       vehicleTypeGame.vehicles()[0].fuel == 100,
                   "Big Boy tender starts with oil");
+        } else if (placed && type == GC_VEHICLE_FLYING_SCOTSMAN_TENDER) {
+            check(vehicleTypeGame.vehicles()[0].fuelType == GC_TRAIN_FUEL_OIL &&
+                      vehicleTypeGame.vehicles()[0].fuel == 100,
+                  "Flying Scotsman tender starts with oil");
         } else if (placed && type == GC_VEHICLE_BIG_BOY) {
             check(vehicleTypeGame.vehicles()[0].fuel == 0,
                   "Big Boy requires tender-supplied oil");
+        } else if (placed && type == GC_VEHICLE_FLYING_SCOTSMAN) {
+            check(vehicleTypeGame.vehicles()[0].fuelType == GC_TRAIN_FUEL_OIL &&
+                      vehicleTypeGame.vehicles()[0].fuel == 0,
+                  "Flying Scotsman requires tender-supplied oil");
+        }
+    }
+    check(glitchcraft::gameengine::isLocomotive(GC_VEHICLE_FLYING_SCOTSMAN) &&
+              glitchcraft::gameengine::isSteamTender(
+                  GC_VEHICLE_FLYING_SCOTSMAN_TENDER) &&
+              glitchcraft::gameengine::isPassengerVehicle(
+                  GC_VEHICLE_FLYING_SCOTSMAN_COACH) &&
+              glitchcraft::gameengine::steamTenderFor(
+                  GC_VEHICLE_FLYING_SCOTSMAN) ==
+                  GC_VEHICLE_FLYING_SCOTSMAN_TENDER &&
+              glitchcraft::gameengine::vehicleName(
+                  GC_VEHICLE_FLYING_SCOTSMAN_COACH).find("Coach") !=
+                  std::string::npos,
+          "Flying Scotsman locomotive, tender, and separate coach are catalogued");
+    for (int index = 0; index < 9; ++index) {
+        const auto colorEngine = static_cast<GcVehicleType>(
+            GC_VEHICLE_SHINKANSEN_ENGINE_RED + index);
+        const auto rearEngine = static_cast<GcVehicleType>(
+            GC_VEHICLE_SHINKANSEN_REAR_ENGINE_RED + index);
+        const auto coach = static_cast<GcVehicleType>(
+            GC_VEHICLE_SHINKANSEN_COACH_RED + index);
+        check(glitchcraft::gameengine::isLocomotive(colorEngine) &&
+                  glitchcraft::gameengine::isLocomotive(rearEngine) &&
+                  glitchcraft::gameengine::isPassengerVehicle(coach),
+              "each Shinkansen color has front/rear engines and a separate coach");
+        check(glitchcraft::gameengine::vehicleColor(colorEngine).red ==
+                  glitchcraft::gameengine::vehicleColor(coach).red &&
+                  glitchcraft::gameengine::vehicleColor(rearEngine).green ==
+                      glitchcraft::gameengine::vehicleColor(coach).green,
+              "Shinkansen engines and coaches share matching color liveries");
+        check(glitchcraft::gameengine::isElectricLocomotive(colorEngine) &&
+                  glitchcraft::gameengine::vehicleName(coach).find("Coach") !=
+                      std::string::npos,
+              "Shinkansen locomotives are electric and coaches are named");
+    }
+    for (int index = 0; index < 26; ++index) {
+        const auto engineType = static_cast<GcVehicleType>(
+            GC_VEHICLE_SUBWAY_ENGINE_A + index);
+        const auto coachType = static_cast<GcVehicleType>(
+            GC_VEHICLE_SUBWAY_COACH_A + index);
+        const char routeLetter = static_cast<char>('A' + index);
+        check(glitchcraft::gameengine::isElectricLocomotive(engineType) &&
+                  glitchcraft::gameengine::isPassengerVehicle(coachType),
+              "every A-Z subway route has an electric engine and separate coach");
+        check(glitchcraft::gameengine::vehicleName(engineType).find(routeLetter) !=
+                      std::string::npos &&
+                  glitchcraft::gameengine::vehicleName(coachType).find(routeLetter) !=
+                      std::string::npos,
+              "subway engine and coach names preserve their route letter");
+        check(glitchcraft::gameengine::vehicleColor(engineType).red ==
+                  glitchcraft::gameengine::vehicleColor(coachType).red &&
+                  glitchcraft::gameengine::vehicleColor(engineType).blue ==
+                      glitchcraft::gameengine::vehicleColor(coachType).blue,
+              "subway engine and coach use matching route colors");
+    }
+    for (const auto type : {GC_VEHICLE_SHINKANSEN_ENGINE_RED,
+                            GC_VEHICLE_SUBWAY_ENGINE_A}) {
+        glitchcraft::Game electricTrain(1234U);
+        const bool placed = electricTrain.placeTrack(GC_TRACK_STRAIGHT, true) &&
+                            electricTrain.placeVehicle(type);
+        check(placed &&
+                  electricTrain.vehicles()[0].fuelType == GC_TRAIN_FUEL_NONE &&
+                  electricTrain.vehicles()[0].fuel == 0,
+              "electric passenger train engines do not require onboard fuel");
+        if (placed) {
+            electricTrain.setTrainPower(true);
+            check(electricTrain.vehicles()[0].powered,
+                  "electric passenger train engines can be powered");
+            check(!electricTrain.addTrainFuel(100),
+                  "electric passenger engines reject diesel and oil refueling");
         }
     }
     glitchcraft::Game switchGame(1234U);
@@ -251,6 +373,19 @@ int main()
     check(switchTrack != switchGame.tracks().end() &&
               switchTrack->second.switchBranch,
           "targeted switch changes branch state");
+    const auto switchPosition = switchTrack->second.position;
+    glitchcraft::Track queriedTrack{};
+    check(switchGame.getTrackAt(switchPosition.x, switchPosition.y,
+                                switchPosition.z, queriedTrack) &&
+              queriedTrack.type == GC_TRACK_SWITCH &&
+              queriedTrack.switchBranch,
+          "track API queries track state at exact coordinates");
+    check(switchGame.setTrackSwitch(switchPosition.x, switchPosition.y,
+                                    switchPosition.z, false) &&
+              switchGame.getTrackAt(switchPosition.x, switchPosition.y,
+                                    switchPosition.z, queriedTrack) &&
+              !queriedTrack.switchBranch,
+          "track API sets a switch branch explicitly");
     glitchcraft::Game removableTrackGame(1234U);
     check(removableTrackGame.placeTrack(GC_TRACK_STRAIGHT, true) &&
               removableTrackGame.mineBlock() &&
@@ -261,6 +396,46 @@ int main()
     check(!switchGame.placeVehicle(
               static_cast<GcVehicleType>(GC_VEHICLE_COUNT)),
           "invalid vehicle types are rejected");
+    glitchcraft::Game directTrackGame(1234U);
+    const int directTrackY = glitchcraft::terrainHeight(30, 30, 1234U);
+    check(directTrackGame.setTrackAt(30, directTrackY, 30,
+                                     GC_TRACK_CURVED, false) &&
+              directTrackGame.getTrackAt(30, directTrackY, 30, queriedTrack) &&
+              queriedTrack.type == GC_TRACK_CURVED &&
+              !queriedTrack.axisX,
+          "track API creates and reads rails at world coordinates");
+    check(directTrackGame.removeTrackAt(30, directTrackY, 30) &&
+              !directTrackGame.getTrackAt(30, directTrackY, 30, queriedTrack),
+          "track API removes an unoccupied rail by coordinates");
+
+    const GcBlock roadBlocks[]{
+        GC_BLOCK_ASPHALT, GC_BLOCK_ROAD_STRAIGHT, GC_BLOCK_ROAD_CURVE,
+        GC_BLOCK_ROAD_T_INTERSECTION, GC_BLOCK_ROAD_CROSS_INTERSECTION,
+        GC_BLOCK_ROAD_DEAD_END, GC_BLOCK_ROAD_ROUNDABOUT};
+    const glitchcraft::gameengine::TextureId roadTextures[]{
+        glitchcraft::gameengine::TextureId::Asphalt,
+        glitchcraft::gameengine::TextureId::RoadStraight,
+        glitchcraft::gameengine::TextureId::RoadCurve,
+        glitchcraft::gameengine::TextureId::RoadTIntersection,
+        glitchcraft::gameengine::TextureId::RoadCrossIntersection,
+        glitchcraft::gameengine::TextureId::RoadDeadEnd,
+        glitchcraft::gameengine::TextureId::RoadRoundabout};
+    glitchcraft::Game roadGame(1234U);
+    for (std::size_t index = 0; index < std::size(roadBlocks); ++index) {
+        const int x = 100 + static_cast<int>(index);
+        check(roadGame.applyBlockEdit(x, 20, 20, roadBlocks[index]) &&
+                  roadGame.blockAt(x, 20, 20) == roadBlocks[index],
+              "asphalt and every road layout are placeable blocks");
+        check(glitchcraft::gameengine::blockTexture(
+                  roadBlocks[index], 0, 1, 0) == roadTextures[index],
+              "each road layout selects its own top-surface texture");
+        if (index > 0) {
+            check(glitchcraft::gameengine::blockTexture(
+                      roadBlocks[index], 0, 0, 1) ==
+                      glitchcraft::gameengine::TextureId::Asphalt,
+                  "road block sides use the asphalt material");
+        }
+    }
 
     const float lhs[4]{1.0F, 2.0F, 3.0F, 4.0F};
     const float rhs[4]{5.0F, 6.0F, 7.0F, 8.0F};
@@ -318,6 +493,16 @@ int main()
     gc_game_drink_potion(apiGame);
     check(gc_game_eat_food(apiGame, GC_FOOD_COOKIE) == 1,
           "C API exposes food consumption");
+    check(gc_game_apply_block_edit(apiGame, 20, 30, 40,
+                                   GC_BLOCK_SHULKER_PURPLE) == 1,
+          "C API can apply a colored shulker block edit");
+    check(gc_game_set_shulker_slot(apiGame, 20, 30, 40, 26,
+                                   GC_BLOCK_REDSTONE, 16) == 1,
+          "C API stores a stack in the last shulker slot");
+    GcShulkerStack cStack{};
+    check(gc_game_get_shulker_slot(apiGame, 20, 30, 40, 26, &cStack) == 1 &&
+              cStack.block == GC_BLOCK_REDSTONE && cStack.count == 16,
+          "C API reads shulker slot contents");
     GcPlayerState state{};
     gc_game_get_player(apiGame, &state);
     check(state.potion_ticks > 0, "C API exposes potion state");
@@ -330,7 +515,9 @@ int main()
           "C API reports placed rail and vehicle counts");
     GcTrackState trackState{};
     check(gc_game_get_track(apiGame, 0, &trackState) == 1 &&
-              trackState.type == GC_TRACK_STRAIGHT && trackState.axis_x == 1,
+              trackState.type == GC_TRACK_STRAIGHT && trackState.axis_x == 1 &&
+              gc_game_get_track_at(apiGame, trackState.x, trackState.y,
+                                   trackState.z, &trackState) == 1,
           "C API exposes rail type and orientation");
     GcVehicleState vehicleState{};
     check(gc_game_get_vehicle(apiGame, 0, &vehicleState) == 1 &&
@@ -339,12 +526,31 @@ int main()
           "C API exposes locomotive fuel and type state");
     check(gc_game_add_train_fuel(apiGame, 75) == 1,
           "C API supports compatible train refueling");
+    check(gc_game_load_train_fuel(apiGame, GC_TRAIN_FUEL_DIESEL, 75) == 1 &&
+              gc_game_load_train_fuel(apiGame, GC_TRAIN_FUEL_OIL, 75) == 0,
+          "C API accepts only the locomotive's compatible fuel type");
     gc_game_toggle_train_power(apiGame);
     check(gc_game_get_vehicle(apiGame, 0, &vehicleState) == 1 &&
               vehicleState.powered == 1,
           "C API toggles locomotive power");
     gc_game_tick(apiGame);
     gc_game_destroy(apiGame);
+
+    GcGame *trackApiGame = gc_game_create(42U);
+    check(trackApiGame != nullptr, "C API creates a track-edit test world");
+    const int apiTrackY = glitchcraft::terrainHeight(30, 30, 42U);
+    check(gc_game_set_track_at(trackApiGame, 30, apiTrackY, 30,
+                               GC_TRACK_SWITCH, 1) == 1,
+          "C API can place a track at explicit world coordinates");
+    check(gc_game_set_track_switch(trackApiGame, 30, apiTrackY, 30, 1) == 1 &&
+              gc_game_get_track_at(trackApiGame, 30, apiTrackY, 30,
+                                   &trackState) == 1 &&
+              trackState.type == GC_TRACK_SWITCH &&
+              trackState.switch_branch == 1,
+          "C API can query and set an explicit switch branch");
+    check(gc_game_remove_track_at(trackApiGame, 30, apiTrackY, 30) == 1,
+          "C API removes unoccupied track by world coordinate");
+    gc_game_destroy(trackApiGame);
 
     if (failures != 0) {
         std::cerr << failures << " test(s) failed\n";

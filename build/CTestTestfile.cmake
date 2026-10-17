@@ -6,3 +6,5 @@
 # testing this directory and lists subdirectories to be tested as well.
 add_test(glitchcraft_engine_tests "/workspaces/GlitchCraft-GameCube-Edition/build/glitchcraft_tests")
 set_tests_properties(glitchcraft_engine_tests PROPERTIES  _BACKTRACE_TRIPLES "/workspaces/GlitchCraft-GameCube-Edition/CMakeLists.txt;59;add_test;/workspaces/GlitchCraft-GameCube-Edition/CMakeLists.txt;0;")
+add_test(glitchcraft_gamecube_image_tests "/home/codespace/.python/current/bin/python3" "/workspaces/GlitchCraft-GameCube-Edition/tests/test_gamecube_image.py")
+set_tests_properties(glitchcraft_gamecube_image_tests PROPERTIES  _BACKTRACE_TRIPLES "/workspaces/GlitchCraft-GameCube-Edition/CMakeLists.txt;62;add_test;/workspaces/GlitchCraft-GameCube-Edition/CMakeLists.txt;0;")

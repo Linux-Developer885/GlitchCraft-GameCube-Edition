@@ -1,7 +1,10 @@
 #include "engine.hpp"
+#include "GameEngine/vehicles.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <new>
+#include <vector>
 
 struct GcGame {
     explicit GcGame(unsigned int seed) : game(seed) {}
@@ -57,6 +60,15 @@ int gc_game_place_block(GcGame *game, GcBlock block)
     return game != nullptr && game->game.placeBlock(block) ? 1 : 0;
 }
 
+int gc_game_apply_block_edit(GcGame *game, int x, int y, int z,
+                             GcBlock block)
+{
+    return game != nullptr &&
+                   game->game.applyBlockEdit(x, y, z, block)
+               ? 1
+               : 0;
+}
+
 int gc_game_mine_block(GcGame *game)
 {
     return game != nullptr && game->game.mineBlock() ? 1 : 0;
@@ -81,6 +93,30 @@ int gc_game_eat_food(GcGame *game, GcFood food)
     return game != nullptr && game->game.eatFood(food) ? 1 : 0;
 }
 
+int gc_game_get_shulker_slot(const GcGame *game, int x, int y, int z,
+                             int slot, GcShulkerStack *stack)
+{
+    if (game == nullptr || stack == nullptr) {
+        return 0;
+    }
+    glitchcraft::ShulkerStack result;
+    if (!game->game.getShulkerSlot(x, y, z, slot, result)) {
+        return 0;
+    }
+    stack->block = result.block;
+    stack->count = result.count;
+    return 1;
+}
+
+int gc_game_set_shulker_slot(GcGame *game, int x, int y, int z, int slot,
+                             GcBlock block, int count)
+{
+    return game != nullptr &&
+                   game->game.setShulkerSlot(x, y, z, slot, block, count)
+               ? 1
+               : 0;
+}
+
 void gc_game_set_flying(GcGame *game, int enabled)
 {
     if (game != nullptr) {
@@ -103,6 +139,47 @@ int gc_game_place_track(GcGame *game, GcTrackType type, int axis_x)
                : 0;
 }
 
+int gc_game_set_track_at(GcGame *game, int x, int y, int z,
+                         GcTrackType type, int axis_x)
+{
+    return game != nullptr &&
+                   game->game.setTrackAt(x, y, z, type, axis_x != 0)
+               ? 1
+               : 0;
+}
+
+int gc_game_remove_track_at(GcGame *game, int x, int y, int z)
+{
+    return game != nullptr && game->game.removeTrackAt(x, y, z) ? 1 : 0;
+}
+
+int gc_game_get_track_at(const GcGame *game, int x, int y, int z,
+                         GcTrackState *state)
+{
+    if (game == nullptr || state == nullptr) {
+        return 0;
+    }
+    glitchcraft::Track track{};
+    if (!game->game.getTrackAt(x, y, z, track)) {
+        return 0;
+    }
+    state->x = track.position.x;
+    state->y = track.position.y;
+    state->z = track.position.z;
+    state->type = track.type;
+    state->axis_x = track.axisX ? 1 : 0;
+    state->switch_branch = track.switchBranch ? 1 : 0;
+    return 1;
+}
+
+int gc_game_set_track_switch(GcGame *game, int x, int y, int z, int branch)
+{
+    return game != nullptr &&
+                   game->game.setTrackSwitch(x, y, z, branch != 0)
+               ? 1
+               : 0;
+}
+
 int gc_game_place_vehicle(GcGame *game, GcVehicleType type)
 {
     return game != nullptr && game->game.placeVehicle(type) ? 1 : 0;
@@ -111,6 +188,11 @@ int gc_game_place_vehicle(GcGame *game, GcVehicleType type)
 int gc_game_add_train_fuel(GcGame *game, int amount)
 {
     return game != nullptr && game->game.addTrainFuel(amount) ? 1 : 0;
+}
+
+int gc_game_load_train_fuel(GcGame *game, GcTrainFuel type, int amount)
+{
+    return game != nullptr && game->game.loadTrainFuel(type, amount) ? 1 : 0;
 }
 
 void gc_game_set_train_power(GcGame *game, int enabled)
@@ -152,14 +234,29 @@ int gc_game_get_track(const GcGame *game, int index, GcTrackState *state)
         static_cast<std::size_t>(index) >= game->game.tracks().size()) {
         return 0;
     }
-    auto track = game->game.tracks().begin();
-    std::advance(track, index);
-    state->x = track->second.position.x;
-    state->y = track->second.position.y;
-    state->z = track->second.position.z;
-    state->type = track->second.type;
-    state->axis_x = track->second.axisX ? 1 : 0;
-    state->switch_branch = track->second.switchBranch ? 1 : 0;
+    std::vector<const glitchcraft::Track *> tracks;
+    tracks.reserve(game->game.tracks().size());
+    for (const auto &entry : game->game.tracks()) {
+        tracks.push_back(&entry.second);
+    }
+    std::sort(tracks.begin(), tracks.end(),
+              [](const glitchcraft::Track *lhs,
+                 const glitchcraft::Track *rhs) {
+                  if (lhs->position.x != rhs->position.x) {
+                      return lhs->position.x < rhs->position.x;
+                  }
+                  if (lhs->position.y != rhs->position.y) {
+                      return lhs->position.y < rhs->position.y;
+                  }
+                  return lhs->position.z < rhs->position.z;
+              });
+    const auto &track = *tracks[static_cast<std::size_t>(index)];
+    state->x = track.position.x;
+    state->y = track.position.y;
+    state->z = track.position.z;
+    state->type = track.type;
+    state->axis_x = track.axisX ? 1 : 0;
+    state->switch_branch = track.switchBranch ? 1 : 0;
     return 1;
 }
 
@@ -181,6 +278,18 @@ int gc_game_get_vehicle(const GcGame *game, int index,
     state->consist_id = vehicle.consist;
     state->fuel_type = vehicle.fuelType;
     state->fuel = vehicle.fuel;
+    if (glitchcraft::gameengine::isSteamLocomotive(vehicle.type)) {
+        const GcVehicleType tenderType =
+            glitchcraft::gameengine::steamTenderFor(vehicle.type);
+        const auto tender = std::find_if(
+            game->game.vehicles().begin(), game->game.vehicles().end(),
+            [&vehicle, tenderType](const glitchcraft::TrainVehicle &candidate) {
+                return candidate.consist == vehicle.consist &&
+                       candidate.type == tenderType;
+            });
+        state->fuel = tender == game->game.vehicles().end() ? 0
+                                                           : tender->fuel;
+    }
     state->powered = vehicle.powered ? 1 : 0;
     return 1;
 }

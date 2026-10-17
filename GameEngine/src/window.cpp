@@ -1,4 +1,5 @@
 #include "GameEngine/window.hpp"
+#include "glitchcraft/version.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -54,8 +55,10 @@ bool Window::open(int width, int height)
         static_cast<unsigned int>(height), 0,
         BlackPixel(platform_->display, screen),
         BlackPixel(platform_->display, screen));
-    XStoreName(platform_->display, platform_->window,
-               "GlitchCraft: GameCube Edition");
+    const std::string title =
+        std::string("GlitchCraft: GameCube Edition - ") +
+        glitchcraft::kReleaseStage + " " + glitchcraft::kVersion;
+    XStoreName(platform_->display, platform_->window, title.c_str());
     XSelectInput(platform_->display, platform_->window,
                  ExposureMask | KeyPressMask | StructureNotifyMask);
     platform_->deleteMessage =

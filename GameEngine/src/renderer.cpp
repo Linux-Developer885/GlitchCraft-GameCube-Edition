@@ -1,4 +1,5 @@
 #include "GameEngine/renderer.hpp"
+#include "GameEngine/vehicles.hpp"
 
 #include "GameEngine/voxel_kernels.h"
 
@@ -280,35 +281,20 @@ void Renderer::drawWorld(const Game &game)
                 std::abs(z - cameraZ) > kViewDistance) {
                 continue;
             }
-            const bool locomotive =
-                vehicle.type == GC_VEHICLE_BIG_BOY ||
-                vehicle.type == GC_VEHICLE_CSX_DIESEL ||
-                vehicle.type == GC_VEHICLE_NS_DIESEL ||
-                vehicle.type == GC_VEHICLE_BNSF_DIESEL ||
-                vehicle.type == GC_VEHICLE_UNION_PACIFIC_DIESEL;
-            const bool tender = vehicle.type == GC_VEHICLE_BIG_BOY_TENDER;
-            const float length = locomotive ? 0.92F : 0.88F;
+            const bool locomotive = isLocomotive(vehicle.type);
+            const bool tender = isSteamTender(vehicle.type);
+            const bool passenger = isPassengerVehicle(vehicle.type);
+            const bool shinkansen =
+                isShinkansenEngine(vehicle.type) ||
+                isShinkansenCoach(vehicle.type);
+            const float length = locomotive ? 0.98F : 0.92F;
             const float width = 0.55F;
             const float lengthX = vehicle.facingX ? length : width;
             const float lengthZ = vehicle.facingX ? width : length;
-            std::uint32_t bodyColor = packColor(153, 66, 48);
-            switch (vehicle.type) {
-            case GC_VEHICLE_BIG_BOY:
-            case GC_VEHICLE_BIG_BOY_TENDER: bodyColor = packColor(32, 34, 36); break;
-            case GC_VEHICLE_CSX_DIESEL: bodyColor = packColor(32, 85, 164); break;
-            case GC_VEHICLE_NS_DIESEL: bodyColor = packColor(40, 43, 49); break;
-            case GC_VEHICLE_BNSF_DIESEL: bodyColor = packColor(226, 94, 27); break;
-            case GC_VEHICLE_UNION_PACIFIC_DIESEL:
-                bodyColor = packColor(206, 171, 35);
-                break;
-            case GC_VEHICLE_HOPPER_CAR:
-            case GC_VEHICLE_GONDOLA_CAR: bodyColor = packColor(82, 84, 77); break;
-            case GC_VEHICLE_FLATCAR: bodyColor = packColor(106, 69, 45); break;
-            case GC_VEHICLE_TANK_CAR: bodyColor = packColor(183, 180, 165); break;
-            case GC_VEHICLE_CABOOSE: bodyColor = packColor(164, 47, 39); break;
-            case GC_VEHICLE_AUTORACK_CAR: bodyColor = packColor(97, 114, 124); break;
-            default: break;
-            }
+            const auto body = vehicleColor(vehicle.type);
+            const std::uint32_t bodyColor =
+                packColor(body.red, body.green, body.blue);
+            const std::uint32_t windowColor = packColor(32, 43, 54);
             drawBox(x, y + 0.08F, z, lengthX, 0.15F, lengthZ,
                     packColor(47, 49, 52));
             if (locomotive) {
@@ -316,9 +302,26 @@ void Renderer::drawWorld(const Game &game)
                         lengthZ * 0.90F, bodyColor);
                 drawBox(x, y + 0.73F, z, lengthX * 0.64F, 0.10F,
                         lengthZ * 0.96F, packColor(47, 49, 52));
-                if (vehicle.type == GC_VEHICLE_BIG_BOY) {
+                if (isSteamLocomotive(vehicle.type)) {
                     drawBox(x, y + 0.81F, z, 0.20F, 0.28F, 0.20F,
                             packColor(47, 49, 52));
+                    if (vehicle.type == GC_VEHICLE_FLYING_SCOTSMAN) {
+                        drawBox(x, y + 0.55F, z, lengthX * 0.52F, 0.29F,
+                                lengthZ * 0.55F, bodyColor);
+                        drawBox(x, y + 0.78F, z, 0.18F, 0.22F, 0.18F,
+                                packColor(28, 29, 27));
+                    }
+                } else if (shinkansen) {
+                    const float noseOffset = -static_cast<float>(
+                        vehicle.direction) * length * 0.47F;
+                    drawBox(x + (vehicle.facingX ? noseOffset : 0.0F),
+                            y + 0.30F,
+                            z + (vehicle.facingX ? 0.0F : noseOffset),
+                            vehicle.facingX ? 0.32F : 0.40F, 0.20F,
+                            vehicle.facingX ? 0.40F : 0.32F, bodyColor);
+                    drawBox(x, y + 0.55F, z,
+                            lengthX * 0.54F, 0.12F, lengthZ * 0.78F,
+                            windowColor);
                 }
             } else if (tender) {
                 drawBox(x, y + 0.33F, z, lengthX * 0.84F, 0.38F,
@@ -328,7 +331,19 @@ void Renderer::drawWorld(const Game &game)
                         lengthZ * 0.88F, bodyColor);
                 drawBox(x, y + 0.61F, z, lengthX * 0.88F, 0.08F,
                         lengthZ * 0.94F, packColor(47, 49, 52));
-                if (vehicle.type == GC_VEHICLE_TANK_CAR) {
+                if (passenger) {
+                    drawBox(x, y + 0.43F, z,
+                            lengthX * 0.76F, 0.10F, lengthZ * 0.92F,
+                            bodyColor);
+                    drawBox(x, y + 0.49F, z,
+                            lengthX * 0.74F, 0.16F, lengthZ * 0.84F,
+                            windowColor);
+                    if (shinkansen) {
+                        drawBox(x, y + 0.70F, z,
+                                lengthX * 0.80F, 0.07F, lengthZ * 0.94F,
+                                bodyColor);
+                    }
+                } else if (vehicle.type == GC_VEHICLE_TANK_CAR) {
                     drawBox(x, y + 0.42F, z, lengthX * 0.68F, 0.34F,
                             lengthZ * 0.65F, packColor(183, 180, 165));
                 } else if (vehicle.type == GC_VEHICLE_AUTORACK_CAR) {

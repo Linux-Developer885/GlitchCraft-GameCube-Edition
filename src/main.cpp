@@ -1,6 +1,7 @@
 #include "console.hpp"
 #include "engine.hpp"
 #include "GameEngine/renderer.hpp"
+#include "GameEngine/vehicles.hpp"
 #include "GameEngine/window.hpp"
 #include "realms.hpp"
 
@@ -63,6 +64,9 @@ void runGame(glitchcraft::Console &console, std::uint32_t seed,
     bool trackAxisX = true;
     int buildMode = 0;
     bool inventoryOpen = false;
+    bool shulkerOpen = false;
+    glitchcraft::Position shulkerPosition{0, 0, 0};
+    int activeShulkerSlot = 0;
     bool paused = false;
     bool running = true;
     glitchcraft::Key lastMovementKey = glitchcraft::Key::None;
@@ -191,8 +195,30 @@ void runGame(glitchcraft::Console &console, std::uint32_t seed,
         if (inventoryOpen) {
             if (key == glitchcraft::Key::Pause) {
                 inventoryOpen = false;
+                shulkerOpen = false;
                 paused = true;
                 game.setPaused(true);
+            } else if (shulkerOpen &&
+                       key == glitchcraft::Key::SelectNextBuildItem) {
+                activeShulkerSlot = (activeShulkerSlot + 1) % 27;
+            } else if (shulkerOpen &&
+                       key == glitchcraft::Key::SelectPreviousBuildItem) {
+                activeShulkerSlot = (activeShulkerSlot + 26) % 27;
+            } else if (shulkerOpen &&
+                       key == glitchcraft::Key::Confirm) {
+                game.setShulkerSlot(
+                    shulkerPosition.x, shulkerPosition.y, shulkerPosition.z,
+                    activeShulkerSlot, selectedBlock, 64);
+            } else if (shulkerOpen &&
+                       key == glitchcraft::Key::Back) {
+                game.setShulkerSlot(
+                    shulkerPosition.x, shulkerPosition.y, shulkerPosition.z,
+                    activeShulkerSlot, GC_BLOCK_AIR, 0);
+            } else if (shulkerOpen &&
+                       (key == glitchcraft::Key::CloseInventory ||
+                        key == glitchcraft::Key::Inventory)) {
+                shulkerOpen = false;
+                inventoryOpen = false;
             } else if (key == glitchcraft::Key::Potion) {
                 game.drinkPotion();
             } else if (key == glitchcraft::Key::Milk) {
@@ -217,6 +243,22 @@ void runGame(glitchcraft::Console &console, std::uint32_t seed,
                 selectedBlock = GC_BLOCK_WATER;
             } else if (key == glitchcraft::Key::SelectLava) {
                 selectedBlock = GC_BLOCK_LAVA;
+            } else if (!shulkerOpen &&
+                       key == glitchcraft::Key::SelectNextBuildItem &&
+                       buildMode == 0) {
+                selectedBlock = static_cast<GcBlock>(
+                    (static_cast<int>(selectedBlock) + 1) % GC_BLOCK_COUNT);
+                if (selectedBlock == GC_BLOCK_AIR) {
+                    selectedBlock = GC_BLOCK_GRASS;
+                }
+            } else if (!shulkerOpen &&
+                       key == glitchcraft::Key::SelectPreviousBuildItem &&
+                       buildMode == 0) {
+                const int selectableCount = GC_BLOCK_COUNT - 1;
+                int selectedIndex = static_cast<int>(selectedBlock) - 1;
+                selectedIndex = (selectedIndex + selectableCount - 1) %
+                                selectableCount;
+                selectedBlock = static_cast<GcBlock>(selectedIndex + 1);
             } else if (key == glitchcraft::Key::CycleBuildMode) {
                 buildMode = (buildMode + 1) % 3;
             } else if (key == glitchcraft::Key::SelectNextBuildItem) {
@@ -252,9 +294,29 @@ void runGame(glitchcraft::Console &console, std::uint32_t seed,
                 inventoryOpen = false;
             }
             if (graphicsEnabled) {
-                window.drawOverlay(
-                    "Inventory",
-                        {"Build: " + std::string(
+                if (shulkerOpen) {
+                        glitchcraft::ShulkerStack stack;
+                        game.getShulkerSlot(
+                            shulkerPosition.x, shulkerPosition.y,
+                            shulkerPosition.z, activeShulkerSlot, stack);
+                        const std::string contents = stack.count > 0
+                            ? "Contents: block " +
+                                  std::to_string(static_cast<int>(stack.block)) +
+                                  " x" + std::to_string(stack.count)
+                            : "Contents: empty";
+                        window.drawOverlay(
+                            "Shulker Box",
+                            {"Slot " + std::to_string(activeShulkerSlot + 1) +
+                                 " of 27",
+                             contents,
+                             "Selected block: " +
+                                 std::to_string(static_cast<int>(selectedBlock)),
+                             "[ / ] select slot  Y store 64 blocks  N clear",
+                             "X or B close"});
+                } else {
+                        window.drawOverlay(
+                            "Inventory",
+                            {"Build: " + std::string(
                              buildMode == 0 ? "blocks" :
                              buildMode == 1 ? "tracks" : "rolling stock") +
                          "   Food: " + std::to_string(game.foodLevel()) + "/100",
@@ -262,11 +324,27 @@ void runGame(glitchcraft::Console &console, std::uint32_t seed,
                          "U water  V lava  1 potion  2 milk",
                          "3 cake  4 cookie  5 crackers  6 sandwich",
                          "7 spaghetti  8 pizza  9 cotton candy",
+                         buildMode == 2
+                             ? "Selected vehicle: " +
+                                   glitchcraft::gameengine::vehicleName(
+                                       selectedVehicle)
+                             : "Selected track: " +
+                                   std::to_string(static_cast<int>(
+                                       selectedTrack)),
                          "[ / ] select rail or vehicle  O rotate rail",
                          "E refuel targeted engine/tender  H toggle switch",
-                         "X or B close inventory"});
+                             "X or B close inventory"});
+                }
+            } else if (shulkerOpen) {
+                glitchcraft::ShulkerStack stack;
+                game.getShulkerSlot(shulkerPosition.x, shulkerPosition.y,
+                                        shulkerPosition.z, activeShulkerSlot,
+                                        stack);
+                console.drawShulker(selectedBlock, activeShulkerSlot, stack);
             } else {
-                console.drawInventory(selectedBlock, game.foodLevel());
+                console.drawInventory(selectedBlock, game.foodLevel(),
+                                      selectedTrack, selectedVehicle,
+                                      buildMode);
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(60));
             continue;
@@ -314,7 +392,20 @@ void runGame(glitchcraft::Console &console, std::uint32_t seed,
             break;
         case glitchcraft::Key::RotateTrack: trackAxisX = !trackAxisX; break;
         case glitchcraft::Key::Confirm: game.toggleTrainPower(); break;
-        case glitchcraft::Key::RefuelTrain: game.addTrainFuel(100); break;
+        case glitchcraft::Key::RefuelTrain: {
+            const auto hit = game.castRay(game.yaw(), game.pitch(), 16.0F);
+            if (hit.hit && !hit.track &&
+                game.isShulkerBox(hit.position.x, hit.position.y,
+                                  hit.position.z)) {
+                shulkerPosition = hit.position;
+                shulkerOpen = true;
+                inventoryOpen = true;
+                activeShulkerSlot = 0;
+            } else {
+                game.addTrainFuel(100);
+            }
+            break;
+        }
         case glitchcraft::Key::ToggleTrackSwitch: game.toggleTrackSwitch(); break;
         case glitchcraft::Key::Pause: game.setPaused(true); paused = true; break;
         case glitchcraft::Key::Quit: running = false; break;

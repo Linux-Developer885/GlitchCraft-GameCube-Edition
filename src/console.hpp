@@ -68,7 +68,11 @@ public:
     void drawTerms();
     void drawWorldSelect();
     void drawRealms();
-    void drawInventory(GcBlock selected, int foodLevel);
+    void drawInventory(GcBlock selected, int foodLevel,
+                       GcTrackType selectedTrack,
+                       GcVehicleType selectedVehicle, int buildMode);
+    void drawShulker(GcBlock selected, int activeSlot,
+                     const ShulkerStack &stack);
     void drawPaused();
     void drawGame(const Game &game);
     void drawMessage(const std::string &message);

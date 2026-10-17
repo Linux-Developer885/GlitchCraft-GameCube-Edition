@@ -1,4 +1,5 @@
 #include "engine.hpp"
+#include "GameEngine/vehicles.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -85,6 +86,52 @@ GcBlock Game::blockAt(int x, int y, int z) const
 {
     const auto edit = edits_.find(Position{x, y, z});
     return edit == edits_.end() ? generatedBlock(x, y, z) : edit->second;
+}
+
+bool Game::isShulkerBox(int x, int y, int z) const
+{
+    const GcBlock block = blockAt(x, y, z);
+    return block >= GC_BLOCK_SHULKER_WHITE &&
+           block <= GC_BLOCK_SHULKER_BLACK;
+}
+
+bool Game::getShulkerSlot(int x, int y, int z, int slot,
+                          ShulkerStack &stack) const
+{
+    if (slot < 0 || slot >= 27 || !isShulkerBox(x, y, z)) {
+        return false;
+    }
+    const auto contents = shulkerContents_.find(Position{x, y, z});
+    if (contents == shulkerContents_.end()) {
+        stack = ShulkerStack{};
+    } else {
+        stack = contents->second[static_cast<std::size_t>(slot)];
+    }
+    return true;
+}
+
+bool Game::setShulkerSlot(int x, int y, int z, int slot, GcBlock block,
+                          int count)
+{
+    if (slot < 0 || slot >= 27 || !isShulkerBox(x, y, z) ||
+        count < 0 || count > 64 ||
+        (count > 0 && (block <= GC_BLOCK_AIR || block >= GC_BLOCK_COUNT))) {
+        return false;
+    }
+    auto &contents = shulkerContents_[Position{x, y, z}];
+    contents[static_cast<std::size_t>(slot)] =
+        count == 0 ? ShulkerStack{} : ShulkerStack{block, count};
+    return true;
+}
+
+void Game::syncShulkerBox(Position position, GcBlock block)
+{
+    if (block >= GC_BLOCK_SHULKER_WHITE &&
+        block <= GC_BLOCK_SHULKER_BLACK) {
+        shulkerContents_.try_emplace(position);
+    } else {
+        shulkerContents_.erase(position);
+    }
 }
 
 bool Game::trackSupportsVehicles(const Track &track) const
@@ -279,6 +326,7 @@ bool Game::placeBlock(GcBlock block)
         return false;
     }
     edits_[target] = block;
+    syncShulkerBox(target, block);
     return true;
 }
 
@@ -294,6 +342,7 @@ bool Game::applyBlockEdit(int x, int y, int z, GcBlock block)
         return false;
     }
     edits_[position] = block;
+    syncShulkerBox(position, block);
     return true;
 }
 
@@ -308,16 +357,74 @@ bool Game::placeTrack(GcTrackType type, bool axisX)
     }
     const Position position{hit.position.x, hit.position.y + 1,
                             hit.position.z};
-    const auto existing = tracks_.find(position);
-    if (existing != tracks_.end() || blockAt(position.x, position.y,
-                                              position.z) != GC_BLOCK_AIR) {
+    return setTrackAt(position.x, position.y, position.z, type, axisX);
+}
+
+bool Game::setTrackAt(int x, int y, int z, GcTrackType type, bool axisX)
+{
+    if (x < -1000000 || x > 1000000 || z < -1000000 || z > 1000000 ||
+        y < -63 || y > 255 || type < GC_TRACK_STRAIGHT ||
+        type >= GC_TRACK_COUNT) {
         return false;
     }
-    Track track{position, type, axisX, false};
+    const Position position{x, y, z};
+    const auto existing = tracks_.find(position);
+    if (existing != tracks_.end()) {
+        const bool occupied = std::any_of(
+            vehicles_.begin(), vehicles_.end(),
+            [position](const TrainVehicle &vehicle) {
+                return vehicle.trackPosition == position;
+            });
+        if (occupied) {
+            return false;
+        }
+    }
+    Track track{position, type, axisX,
+                existing == tracks_.end() ? false
+                                          : existing->second.switchBranch};
     if (!trackSupportsVehicles(track)) {
         return false;
     }
-    tracks_.emplace(position, track);
+    tracks_[position] = track;
+    return true;
+}
+
+bool Game::removeTrackAt(int x, int y, int z)
+{
+    const Position position{x, y, z};
+    const auto track = tracks_.find(position);
+    if (track == tracks_.end()) {
+        return false;
+    }
+    const bool occupied = std::any_of(
+        vehicles_.begin(), vehicles_.end(),
+        [position](const TrainVehicle &vehicle) {
+            return vehicle.trackPosition == position;
+        });
+    if (occupied) {
+        return false;
+    }
+    tracks_.erase(track);
+    return true;
+}
+
+bool Game::getTrackAt(int x, int y, int z, Track &track) const
+{
+    const auto found = tracks_.find(Position{x, y, z});
+    if (found == tracks_.end()) {
+        return false;
+    }
+    track = found->second;
+    return true;
+}
+
+bool Game::setTrackSwitch(int x, int y, int z, bool branch)
+{
+    const auto found = tracks_.find(Position{x, y, z});
+    if (found == tracks_.end() || found->second.type != GC_TRACK_SWITCH) {
+        return false;
+    }
+    found->second.switchBranch = branch;
     return true;
 }
 
@@ -366,12 +473,7 @@ bool Game::placeVehicle(GcVehicleType type)
         consist = adjacent->consist;
         order = adjacent->consistOrder + adjacentDelta;
     }
-    const bool locomotive =
-        type == GC_VEHICLE_BIG_BOY ||
-        type == GC_VEHICLE_CSX_DIESEL ||
-        type == GC_VEHICLE_NS_DIESEL ||
-        type == GC_VEHICLE_BNSF_DIESEL ||
-        type == GC_VEHICLE_UNION_PACIFIC_DIESEL;
+    const bool locomotive = gameengine::isLocomotive(type);
     if (locomotive && adjacent != nullptr) {
         order = 0;
         for (auto &existing : vehicles_) {
@@ -387,7 +489,11 @@ bool Game::placeVehicle(GcVehicleType type)
 
     GcTrainFuel fuelType = GC_TRAIN_FUEL_NONE;
     int fuel = 0;
-    if (type == GC_VEHICLE_BIG_BOY_TENDER) {
+    if (gameengine::isSteamLocomotive(type)) {
+        fuelType = GC_TRAIN_FUEL_OIL;
+    } else if (gameengine::isElectricLocomotive(type)) {
+        fuelType = GC_TRAIN_FUEL_NONE;
+    } else if (gameengine::isSteamTender(type)) {
         fuelType = GC_TRAIN_FUEL_OIL;
         fuel = 100;
     } else if (type == GC_VEHICLE_CSX_DIESEL ||
@@ -418,6 +524,7 @@ bool Game::mineBlock()
         return true;
     }
     edits_[hit.position] = GC_BLOCK_AIR;
+    syncShulkerBox(hit.position, GC_BLOCK_AIR);
     return true;
 }
 
@@ -483,27 +590,24 @@ void Game::advanceTrains()
 {
     for (std::size_t engineIndex = 0; engineIndex < vehicles_.size(); ++engineIndex) {
         auto &engine = vehicles_[engineIndex];
-        const bool locomotive =
-            engine.type == GC_VEHICLE_BIG_BOY ||
-            engine.type == GC_VEHICLE_CSX_DIESEL ||
-            engine.type == GC_VEHICLE_NS_DIESEL ||
-            engine.type == GC_VEHICLE_BNSF_DIESEL ||
-            engine.type == GC_VEHICLE_UNION_PACIFIC_DIESEL;
+        const bool locomotive = gameengine::isLocomotive(engine.type);
         if (!locomotive || !engine.powered) {
             continue;
         }
 
         auto tender = vehicles_.end();
-        if (engine.type == GC_VEHICLE_BIG_BOY) {
+        if (gameengine::isSteamLocomotive(engine.type)) {
+            const GcVehicleType tenderType =
+                gameengine::steamTenderFor(engine.type);
             tender = std::find_if(
                 vehicles_.begin(), vehicles_.end(),
-                [&engine](const TrainVehicle &vehicle) {
+                [&engine, tenderType](const TrainVehicle &vehicle) {
                     return vehicle.consist == engine.consist &&
-                           vehicle.type == GC_VEHICLE_BIG_BOY_TENDER;
+                           vehicle.type == tenderType;
                 });
             engine.fuel = tender == vehicles_.end() ? 0 : tender->fuel;
         }
-        if (engine.fuel <= 0) {
+        if (engine.fuelType != GC_TRAIN_FUEL_NONE && engine.fuel <= 0) {
             engine.powered = false;
             continue;
         }
@@ -587,7 +691,7 @@ void Game::advanceTrains()
             continue;
         }
 
-        const int tickRate = engine.type == GC_VEHICLE_BIG_BOY ? 18 : 12;
+        const int tickRate = gameengine::isSteamLocomotive(engine.type) ? 18 : 12;
         if (++engine.fuelCounter < tickRate) {
             continue;
         }
@@ -622,14 +726,14 @@ void Game::advanceTrains()
             engine.powered = false;
             continue;
         }
-        if (engine.type == GC_VEHICLE_BIG_BOY) {
+        if (gameengine::isSteamLocomotive(engine.type)) {
             if (tender == vehicles_.end() || tender->fuel <= 0) {
                 engine.powered = false;
                 continue;
             }
             --tender->fuel;
             engine.fuel = tender->fuel;
-        } else {
+        } else if (engine.fuelType != GC_TRAIN_FUEL_NONE) {
             --engine.fuel;
         }
         for (auto &vehicle : vehicles_) {
@@ -734,9 +838,6 @@ void Game::removeRemotePlayer(int id)
 
 bool Game::addTrainFuel(int amount)
 {
-    if (amount <= 0) {
-        return false;
-    }
     const RayHit hit = castRay(yaw_, pitch_, 16.0F);
     if (!hit.hit || !hit.track) {
         return false;
@@ -745,19 +846,40 @@ bool Game::addTrainFuel(int amount)
         if (!(vehicle.trackPosition == hit.position)) {
             continue;
         }
-        if (vehicle.fuelType == GC_TRAIN_FUEL_OIL &&
-            vehicle.type == GC_VEHICLE_BIG_BOY_TENDER) {
-            vehicle.fuel = std::min(1000, vehicle.fuel + amount);
-            return true;
+        return loadTrainFuel(vehicle.fuelType, amount);
+    }
+    return false;
+}
+
+bool Game::loadTrainFuel(GcTrainFuel type, int amount)
+{
+    constexpr int kFuelCapacity = 1000;
+    if ((type != GC_TRAIN_FUEL_OIL && type != GC_TRAIN_FUEL_DIESEL) ||
+        amount <= 0) {
+        return false;
+    }
+    const RayHit hit = castRay(yaw_, pitch_, 16.0F);
+    if (!hit.hit || !hit.track) {
+        return false;
+    }
+    for (auto &vehicle : vehicles_) {
+        if (!(vehicle.trackPosition == hit.position) ||
+            vehicle.fuelType != type || vehicle.fuel >= kFuelCapacity) {
+            continue;
         }
-        if (vehicle.fuelType == GC_TRAIN_FUEL_DIESEL &&
-            (vehicle.type == GC_VEHICLE_CSX_DIESEL ||
-             vehicle.type == GC_VEHICLE_NS_DIESEL ||
-             vehicle.type == GC_VEHICLE_BNSF_DIESEL ||
-             vehicle.type == GC_VEHICLE_UNION_PACIFIC_DIESEL)) {
-            vehicle.fuel = std::min(1000, vehicle.fuel + amount);
-            return true;
+        const bool compatible =
+            (type == GC_TRAIN_FUEL_OIL &&
+             gameengine::isSteamTender(vehicle.type)) ||
+            (type == GC_TRAIN_FUEL_DIESEL &&
+             (vehicle.type == GC_VEHICLE_CSX_DIESEL ||
+              vehicle.type == GC_VEHICLE_NS_DIESEL ||
+              vehicle.type == GC_VEHICLE_BNSF_DIESEL ||
+              vehicle.type == GC_VEHICLE_UNION_PACIFIC_DIESEL));
+        if (!compatible) {
+            return false;
         }
+        vehicle.fuel += std::min(amount, kFuelCapacity - vehicle.fuel);
+        return true;
     }
     return false;
 }
@@ -766,12 +888,7 @@ void Game::setTrainPower(bool enabled)
 {
     std::vector<int> poweredConsists;
     for (auto &vehicle : vehicles_) {
-        const bool locomotive =
-            vehicle.type == GC_VEHICLE_BIG_BOY ||
-            vehicle.type == GC_VEHICLE_CSX_DIESEL ||
-            vehicle.type == GC_VEHICLE_NS_DIESEL ||
-            vehicle.type == GC_VEHICLE_BNSF_DIESEL ||
-            vehicle.type == GC_VEHICLE_UNION_PACIFIC_DIESEL;
+        const bool locomotive = gameengine::isLocomotive(vehicle.type);
         if (!locomotive) {
             continue;
         }
@@ -788,12 +905,7 @@ void Game::toggleTrainPower()
 {
     const bool currentlyPowered = std::any_of(
         vehicles_.begin(), vehicles_.end(), [](const TrainVehicle &vehicle) {
-            return vehicle.powered &&
-                (vehicle.type == GC_VEHICLE_BIG_BOY ||
-                 vehicle.type == GC_VEHICLE_CSX_DIESEL ||
-                 vehicle.type == GC_VEHICLE_NS_DIESEL ||
-                 vehicle.type == GC_VEHICLE_BNSF_DIESEL ||
-                 vehicle.type == GC_VEHICLE_UNION_PACIFIC_DIESEL);
+            return vehicle.powered && gameengine::isLocomotive(vehicle.type);
         });
     setTrainPower(!currentlyPowered);
 }

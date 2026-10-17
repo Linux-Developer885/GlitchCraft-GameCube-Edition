@@ -6,6 +6,7 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
   /usr/include/c++/13/algorithm \
+  /usr/include/c++/13/array \
   /usr/include/c++/13/atomic \
   /usr/include/c++/13/backward/auto_ptr.h \
   /usr/include/c++/13/backward/binders.h \
@@ -82,6 +83,7 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
   /usr/include/c++/13/bits/stl_tempbuf.h \
   /usr/include/c++/13/bits/stl_uninitialized.h \
   /usr/include/c++/13/bits/stl_vector.h \
+  /usr/include/c++/13/bits/stream_iterator.h \
   /usr/include/c++/13/bits/streambuf.tcc \
   /usr/include/c++/13/bits/streambuf_iterator.h \
   /usr/include/c++/13/bits/string_view.tcc \
@@ -99,6 +101,7 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
   /usr/include/c++/13/chrono \
   /usr/include/c++/13/clocale \
   /usr/include/c++/13/cmath \
+  /usr/include/c++/13/compare \
   /usr/include/c++/13/cstddef \
   /usr/include/c++/13/cstdint \
   /usr/include/c++/13/cstdio \
@@ -121,6 +124,7 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
   /usr/include/c++/13/iosfwd \
   /usr/include/c++/13/iostream \
   /usr/include/c++/13/istream \
+  /usr/include/c++/13/iterator \
   /usr/include/c++/13/limits \
   /usr/include/c++/13/memory \
   /usr/include/c++/13/new \
@@ -264,6 +268,7 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h \
   /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/renderer.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/textures.hpp \
+  /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/vehicles.hpp \
   /workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/voxel_kernels.h \
   /workspaces/GlitchCraft-GameCube-Edition/include/glitchcraft/game_api.h \
   /workspaces/GlitchCraft-GameCube-Edition/src/engine.hpp \
@@ -288,17 +293,11 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/x86_64-linux-gnu/sys/types.h:
 
-/usr/include/c++/13/pstl/glue_algorithm_defs.h:
+/usr/include/x86_64-linux-gnu/sys/single_threaded.h:
 
-/usr/include/c++/13/ext/concurrence.h:
+/usr/include/x86_64-linux-gnu/sys/cdefs.h:
 
-/usr/include/c++/13/pstl/execution_defs.h:
-
-/usr/include/c++/13/bits/basic_ios.tcc:
-
-/usr/include/x86_64-linux-gnu/c++/13/bits/gthr.h:
-
-/usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
+/usr/include/x86_64-linux-gnu/gnu/stubs.h:
 
 /usr/include/c++/13/istream:
 
@@ -309,6 +308,10 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/c++/13/ext/string_conversions.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
+
+/usr/include/c++/13/ext/concurrence.h:
+
+/usr/include/c++/13/pstl/glue_algorithm_defs.h:
 
 /usr/include/c++/13/cctype:
 
@@ -323,10 +326,6 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h:
-
-/usr/include/c++/13/ostream:
-
-/usr/include/c++/13/tr1/riemann_zeta.tcc:
 
 /usr/include/c++/13/cmath:
 
@@ -352,13 +351,11 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/c++/13/bits/atomic_base.h:
 
-/usr/include/c++/13/pstl/glue_memory_defs.h:
-
-/usr/include/c++/13/exception:
-
 /usr/include/c++/13/bits/stl_pair.h:
 
 /usr/include/x86_64-linux-gnu/bits/errno.h:
+
+/workspaces/GlitchCraft-GameCube-Edition/GameEngine/include/GameEngine/vehicles.hpp:
 
 /usr/include/c++/13/bits/uses_allocator.h:
 
@@ -391,6 +388,10 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/c++/13/bits/stl_vector.h:
 
 /usr/include/c++/13/bits/stl_tempbuf.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:
+
+/usr/include/asm-generic/errno.h:
 
 /usr/include/c++/13/bits/functexcept.h:
 
@@ -428,7 +429,15 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/c++/13/bits/locale_facets.tcc:
 
+/usr/include/c++/13/bits/refwrap.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
+
 /usr/include/c++/13/bits/cxxabi_forced.h:
+
+/usr/include/c++/13/ostream:
+
+/usr/include/c++/13/tr1/riemann_zeta.tcc:
 
 /usr/include/c++/13/bits/cpp_type_traits.h:
 
@@ -470,15 +479,19 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/c++/13/bits/locale_facets.h:
 
-/usr/include/c++/13/bits/localefwd.h:
-
-/usr/include/c++/13/bits/streambuf_iterator.h:
-
-/usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
-
 /usr/include/c++/13/backward/binders.h:
 
+/usr/include/c++/13/ext/aligned_buffer.h:
+
+/usr/include/locale.h:
+
+/usr/include/c++/13/bits/utility.h:
+
+/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
+
 /usr/include/c++/13/bits/enable_special_members.h:
+
+/usr/include/c++/13/bits/stream_iterator.h:
 
 /usr/include/c++/13/bits/allocated_ptr.h:
 
@@ -489,6 +502,10 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/c++/13/bits/predefined_ops.h:
 
 /usr/include/c++/13/iosfwd:
+
+/usr/include/x86_64-linux-gnu/sys/select.h:
+
+/usr/include/c++/13/cwchar:
 
 /usr/include/alloca.h:
 
@@ -504,6 +521,8 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/c++/13/algorithm:
 
+/usr/include/c++/13/array:
+
 /usr/include/c++/13/bits/stl_iterator_base_funcs.h:
 
 /usr/include/asm-generic/errno-base.h:
@@ -512,15 +531,13 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/x86_64-linux-gnu/bits/math-vector.h:
 
+/usr/include/c++/13/bits/localefwd.h:
+
+/usr/include/c++/13/bits/streambuf_iterator.h:
+
+/usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
+
 /usr/include/c++/13/backward/auto_ptr.h:
-
-/usr/include/c++/13/ext/aligned_buffer.h:
-
-/usr/include/locale.h:
-
-/usr/include/c++/13/bits/utility.h:
-
-/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
 
 /usr/include/c++/13/bits/concept_check.h:
 
@@ -564,6 +581,12 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/x86_64-linux-gnu/bits/uintn-identity.h:
 
+/usr/include/c++/13/bits/basic_ios.tcc:
+
+/usr/include/c++/13/pstl/execution_defs.h:
+
+/usr/include/x86_64-linux-gnu/c++/13/bits/gthr.h:
+
 /usr/include/c++/13/bits/functional_hash.h:
 
 /usr/include/errno.h:
@@ -576,8 +599,6 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/c++/13/bits/ostream_insert.h:
 
-/usr/include/c++/13/bits/ios_base.h:
-
 /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h:
 
 /usr/include/c++/13/bits/ostream.tcc:
@@ -587,6 +608,10 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/c++/13/bits/uniform_int_dist.h:
 
 /usr/include/c++/13/bits/locale_classes.tcc:
+
+/usr/include/c++/13/bits/ios_base.h:
+
+/usr/include/c++/13/iterator:
 
 /usr/include/c++/13/bits/invoke.h:
 
@@ -600,15 +625,19 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/c++/13/ios:
 
+/usr/include/c++/13/compare:
+
 /usr/include/c++/13/system_error:
 
 /usr/include/c++/13/bits/string_view.tcc:
 
 /usr/include/x86_64-linux-gnu/bits/thread-shared-types.h:
 
-/usr/include/c++/13/bits/refwrap.h:
+/usr/include/c++/13/exception:
 
-/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
+/usr/include/c++/13/pstl/glue_memory_defs.h:
+
+/usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
 
 /usr/include/c++/13/pstl/pstl_config.h:
 
@@ -631,8 +660,6 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/c++/13/tr1/hypergeometric.tcc:
 
 /usr/include/c++/13/type_traits:
-
-/usr/include/x86_64-linux-gnu/sys/single_threaded.h:
 
 /usr/include/c++/13/tr1/legendre_function.tcc:
 
@@ -694,8 +721,6 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/x86_64-linux-gnu/bits/endian.h:
 
-/usr/include/x86_64-linux-gnu/gnu/stubs.h:
-
 /usr/include/c++/13/bits/requires_hosted.h:
 
 /usr/include/x86_64-linux-gnu/bits/floatn-common.h:
@@ -721,10 +746,6 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/x86_64-linux-gnu/bits/setjmp.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:
-
-/usr/include/c++/13/cwchar:
-
-/usr/include/x86_64-linux-gnu/sys/select.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/FILE.h:
 
@@ -768,10 +789,6 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 
 /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h:
 
-/usr/include/asm-generic/errno.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:
-
 /usr/include/c++/13/ext/atomicity.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_tm.h:
@@ -801,5 +818,3 @@ CMakeFiles/glitchcraft_tests.dir/tests/test_engine.cpp.o: /workspaces/GlitchCraf
 /usr/include/c++/13/bits/node_handle.h:
 
 /usr/include/x86_64-linux-gnu/gnu/stubs-64.h:
-
-/usr/include/x86_64-linux-gnu/sys/cdefs.h:

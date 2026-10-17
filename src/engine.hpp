@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <array>
 #include <unordered_map>
 #include <vector>
 
@@ -61,6 +62,11 @@ struct RemotePlayer {
     float pitch;
 };
 
+struct ShulkerStack {
+    GcBlock block = GC_BLOCK_AIR;
+    int count = 0;
+};
+
 int terrainHeight(int x, int z, std::uint32_t seed);
 
 class Game {
@@ -75,11 +81,20 @@ public:
     bool placeBlock(GcBlock block);
     bool applyBlockEdit(int x, int y, int z, GcBlock block);
     bool placeTrack(GcTrackType type, bool axisX = true);
+    bool setTrackAt(int x, int y, int z, GcTrackType type, bool axisX);
+    bool removeTrackAt(int x, int y, int z);
+    bool getTrackAt(int x, int y, int z, Track &track) const;
+    bool setTrackSwitch(int x, int y, int z, bool branch);
     bool placeVehicle(GcVehicleType type);
     bool mineBlock();
     void drinkPotion();
     void drinkMilk();
     bool eatFood(GcFood food);
+    bool isShulkerBox(int x, int y, int z) const;
+    bool getShulkerSlot(int x, int y, int z, int slot,
+                        ShulkerStack &stack) const;
+    bool setShulkerSlot(int x, int y, int z, int slot, GcBlock block,
+                        int count);
     void setFlying(bool enabled);
     void setPaused(bool paused);
     void tick();
@@ -102,6 +117,7 @@ public:
                          float pitch);
     void removeRemotePlayer(int id);
     bool addTrainFuel(int amount);
+    bool loadTrainFuel(GcTrainFuel type, int amount);
     void setTrainPower(bool enabled);
     void toggleTrainPower();
     void toggleTrackSwitch();
@@ -123,6 +139,8 @@ private:
     std::unordered_map<Position, Track, PositionHash> tracks_;
     std::vector<TrainVehicle> vehicles_;
     std::vector<RemotePlayer> remotePlayers_;
+    std::unordered_map<Position, std::array<ShulkerStack, 27>, PositionHash>
+        shulkerContents_;
     int nextConsistId_ = 1;
 
     GcBlock generatedBlock(int x, int y, int z) const;
@@ -130,6 +148,7 @@ private:
     void changeView(float yawDelta, float pitchDelta);
     bool trackSupportsVehicles(const Track &track) const;
     void advanceTrains();
+    void syncShulkerBox(Position position, GcBlock block);
 };
 
 }

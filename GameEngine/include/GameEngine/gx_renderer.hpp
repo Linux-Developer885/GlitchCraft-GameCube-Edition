@@ -16,7 +16,9 @@ public:
     bool initialize();
     void render(const Game &game, GcBlock selectedBlock, bool paused,
                 bool inventoryOpen, GcTrackType selectedTrack,
-                GcVehicleType selectedVehicle, bool vehicleSelected);
+                GcVehicleType selectedVehicle, bool vehicleSelected,
+                bool shulkerOpen, Position shulkerPosition,
+                int activeShulkerSlot);
 
 private:
     static constexpr int kViewDistance = 12;
@@ -29,7 +31,8 @@ private:
     void drawRemotePlayer(const RemotePlayer &player);
     void drawHud(GcBlock selectedBlock, bool paused, bool inventoryOpen,
                  GcTrackType selectedTrack, GcVehicleType selectedVehicle,
-                 bool vehicleSelected);
+                 bool vehicleSelected, const Game &game, bool shulkerOpen,
+                 Position shulkerPosition, int activeShulkerSlot);
     void buildTextureAtlas();
     void drawQuad(const std::array<std::array<float, 2>, 4> &vertices,
                   GXColor color);

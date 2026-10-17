@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(GlitchCraftGameCubeEdition LANGUAGES C CXX)
+project(GlitchCraftGameCubeEdition VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -57,4 +57,10 @@ if(GLITCHCRAFT_BUILD_TESTS)
     target_link_libraries(glitchcraft_tests PRIVATE glitchcraft_engine
         Threads::Threads)
     add_test(NAME glitchcraft_engine_tests COMMAND glitchcraft_tests)
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME glitchcraft_gamecube_image_tests
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_gamecube_image.py)
+    endif()
 endif()

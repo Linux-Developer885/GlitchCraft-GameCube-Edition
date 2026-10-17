@@ -1,19 +1,39 @@
-Start testing: Oct 13 22:49 UTC
+Start testing: Oct 17 18:22 UTC
 ----------------------------------------------------------
-1/1 Testing: glitchcraft_engine_tests
-1/1 Test: glitchcraft_engine_tests
+1/2 Testing: glitchcraft_engine_tests
+1/2 Test: glitchcraft_engine_tests
 Command: "/workspaces/GlitchCraft-GameCube-Edition/build/glitchcraft_tests"
 Directory: /workspaces/GlitchCraft-GameCube-Edition/build
-"glitchcraft_engine_tests" start time: Oct 13 22:49 UTC
+"glitchcraft_engine_tests" start time: Oct 17 18:22 UTC
 Output:
 ----------------------------------------------------------
 All engine tests passed
 <end of output>
-Test time =   0.55 sec
+Test time =   0.54 sec
 ----------------------------------------------------------
 Test Passed.
-"glitchcraft_engine_tests" end time: Oct 13 22:49 UTC
+"glitchcraft_engine_tests" end time: Oct 17 18:22 UTC
 "glitchcraft_engine_tests" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Oct 13 22:49 UTC
+2/2 Testing: glitchcraft_gamecube_image_tests
+2/2 Test: glitchcraft_gamecube_image_tests
+Command: "/home/codespace/.python/current/bin/python3" "/workspaces/GlitchCraft-GameCube-Edition/tests/test_gamecube_image.py"
+Directory: /workspaces/GlitchCraft-GameCube-Edition/build
+"glitchcraft_gamecube_image_tests" start time: Oct 17 18:22 UTC
+Output:
+----------------------------------------------------------
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK
+<end of output>
+Test time =   0.08 sec
+----------------------------------------------------------
+Test Passed.
+"glitchcraft_gamecube_image_tests" end time: Oct 17 18:22 UTC
+"glitchcraft_gamecube_image_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 17 18:22 UTC

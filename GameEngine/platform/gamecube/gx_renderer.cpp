@@ -1,4 +1,5 @@
 #include "GameEngine/gx_renderer.hpp"
+#include "GameEngine/vehicles.hpp"
 
 #include <gccore.h>
 #include <ogc/system.h>
@@ -32,7 +33,7 @@ constexpr std::array<Face, 6> kFaces{{
 
 GXRModeObj *videoMode;
 void *framebuffer;
-alignas(32) std::uint16_t textureAtlas[256U * 16U]{};
+alignas(32) std::uint16_t textureAtlas[1024U * 16U]{};
 
 GXColor blockColor(const std::array<int, 3> &normal)
 {
@@ -51,25 +52,10 @@ GXColor blockColor(const std::array<int, 3> &normal)
         light, light, light, 255};
 }
 
-GXColor vehicleColor(GcVehicleType type)
+GXColor gxVehicleColor(GcVehicleType type)
 {
-    switch (type) {
-    case GC_VEHICLE_BIG_BOY: return GXColor{25, 27, 30, 255};
-    case GC_VEHICLE_CSX_DIESEL: return GXColor{32, 85, 164, 255};
-    case GC_VEHICLE_NS_DIESEL: return GXColor{40, 43, 49, 255};
-    case GC_VEHICLE_BNSF_DIESEL: return GXColor{226, 94, 27, 255};
-    case GC_VEHICLE_UNION_PACIFIC_DIESEL:
-        return GXColor{206, 171, 35, 255};
-    case GC_VEHICLE_BIG_BOY_TENDER: return GXColor{32, 34, 36, 255};
-    case GC_VEHICLE_BOXCAR: return GXColor{153, 66, 48, 255};
-    case GC_VEHICLE_HOPPER_CAR: return GXColor{73, 79, 75, 255};
-    case GC_VEHICLE_GONDOLA_CAR: return GXColor{95, 91, 81, 255};
-    case GC_VEHICLE_FLATCAR: return GXColor{106, 69, 45, 255};
-    case GC_VEHICLE_TANK_CAR: return GXColor{183, 180, 165, 255};
-    case GC_VEHICLE_CABOOSE: return GXColor{164, 47, 39, 255};
-    case GC_VEHICLE_AUTORACK_CAR: return GXColor{97, 114, 124, 255};
-    default: return GXColor{127, 127, 127, 255};
-    }
+    const VehicleColor color = gameengine::vehicleColor(type);
+    return GXColor{color.red, color.green, color.blue, 255};
 }
 
 void emitVertex(float x, float y, float z, TextureId texture,
@@ -77,7 +63,8 @@ void emitVertex(float x, float y, float z, TextureId texture,
 {
     GX_Position3f32(x, y, z);
     const float atlasU =
-        (static_cast<float>(texture) * 16.0F + 0.5F + u * 15.0F) / 256.0F;
+        (static_cast<float>(texture) * 16.0F + 0.5F + u * 15.0F) /
+        1024.0F;
     const float atlasV = (0.5F + v * 15.0F) / 16.0F;
     GX_TexCoord2f32(atlasU, atlasV);
 }
@@ -147,7 +134,7 @@ bool GxRenderer::initialize()
     GX_SetChanCtrl(GX_COLOR0A0, GX_DISABLE, GX_SRC_REG, GX_SRC_VTX,
                    GX_LIGHTNULL, GX_DF_NONE, GX_AF_NONE);
     buildTextureAtlas();
-    GX_InitTexObj(&textureObject_, textureAtlas, 256, 16, GX_TF_RGB5A3,
+    GX_InitTexObj(&textureObject_, textureAtlas, 1024, 16, GX_TF_RGB5A3,
                   GX_CLAMP, GX_CLAMP, GX_FALSE);
     GX_InitTexObjFilterMode(&textureObject_, GX_NEAR, GX_NEAR);
     GX_LoadTexObj(&textureObject_, GX_TEXMAP0);
@@ -174,7 +161,7 @@ void GxRenderer::buildTextureAtlas()
                 const std::size_t atlasX = textureIndex * 16U +
                                            static_cast<std::size_t>(x);
                 const std::size_t tileBlock =
-                    static_cast<std::size_t>(y / 4) * 64U + atlasX / 4U;
+                    static_cast<std::size_t>(y / 4) * 256U + atlasX / 4U;
                 const std::size_t tileOffset =
                     static_cast<std::size_t>(y % 4) * 4U +
                     atlasX % 4U;
@@ -188,7 +175,9 @@ void GxRenderer::buildTextureAtlas()
 void GxRenderer::render(const Game &game, GcBlock selectedBlock,
                         bool paused, bool inventoryOpen,
                         GcTrackType selectedTrack,
-                        GcVehicleType selectedVehicle, bool vehicleSelected)
+                        GcVehicleType selectedVehicle, bool vehicleSelected,
+                        bool shulkerOpen, Position shulkerPosition,
+                        int activeShulkerSlot)
 {
     GX_SetCopyClear(GXColor{112, 180, 239, 255}, 0x00ffffffU);
     GX_InvalidateTexAll();
@@ -230,7 +219,8 @@ void GxRenderer::render(const Game &game, GcBlock selectedBlock,
     GX_LoadPosMtxImm(identity, GX_PNMTX0);
     GX_LoadProjectionMtx(projection, GX_PERSPECTIVE);
     drawHud(selectedBlock, paused, inventoryOpen, selectedTrack,
-            selectedVehicle, vehicleSelected);
+            selectedVehicle, vehicleSelected, game, shulkerOpen,
+            shulkerPosition, activeShulkerSlot);
 
     GX_DrawDone();
     GX_CopyDisp(framebuffer, GX_TRUE);
@@ -421,17 +411,16 @@ void GxRenderer::drawVehicle(const TrainVehicle &vehicle)
     const float x = static_cast<float>(vehicle.trackPosition.x) + 0.5F;
     const float y = static_cast<float>(vehicle.trackPosition.y) + 0.20F;
     const float z = static_cast<float>(vehicle.trackPosition.z) + 0.5F;
-    const bool locomotive =
-        vehicle.type == GC_VEHICLE_BIG_BOY ||
-        vehicle.type == GC_VEHICLE_CSX_DIESEL ||
-        vehicle.type == GC_VEHICLE_NS_DIESEL ||
-        vehicle.type == GC_VEHICLE_BNSF_DIESEL ||
-        vehicle.type == GC_VEHICLE_UNION_PACIFIC_DIESEL;
-    const bool tender = vehicle.type == GC_VEHICLE_BIG_BOY_TENDER;
-    const float length = locomotive ? 0.92F : (tender ? 0.88F : 0.92F);
+    const bool locomotive = isLocomotive(vehicle.type);
+    const bool tender = isSteamTender(vehicle.type);
+    const bool passenger = isPassengerVehicle(vehicle.type);
+    const bool shinkansen =
+        isShinkansenEngine(vehicle.type) ||
+        isShinkansenCoach(vehicle.type);
+    const float length = locomotive ? 0.98F : (tender ? 0.88F : 0.92F);
     const float width = locomotive ? 0.58F : 0.55F;
     const float alongSign = static_cast<float>(vehicle.direction);
-    const GXColor body = vehicleColor(vehicle.type);
+    const GXColor body = gxVehicleColor(vehicle.type);
     const GXColor roof{47, 49, 52, 255};
     const GXColor wheels{28, 28, 30, 255};
     const GXColor coupler{75, 75, 78, 255};
@@ -474,9 +463,26 @@ void GxRenderer::drawVehicle(const TrainVehicle &vehicle)
             width * 0.88F, body);
         box(x, y + 0.73F, z, length * 0.64F, 0.10F,
             width * 0.96F, roof);
-        box(x + (vehicle.facingX ? alongSign * 0.13F : 0.0F),
-            y + 0.77F, z + (vehicle.facingX ? 0.0F : 0.13F),
-            0.20F, 0.28F, 0.20F, roof);
+        if (isSteamLocomotive(vehicle.type)) {
+            box(x, y + 0.55F, z, length * 0.52F, 0.29F,
+                width * 0.55F, body);
+            box(x + (vehicle.facingX ? alongSign * 0.13F : 0.0F),
+                y + 0.77F, z + (vehicle.facingX ? 0.0F : 0.13F),
+                0.20F, 0.28F, 0.20F, roof);
+        } else {
+            box(x + (vehicle.facingX ? alongSign * 0.13F : 0.0F),
+                y + 0.77F, z + (vehicle.facingX ? 0.0F : 0.13F),
+                0.20F, 0.28F, 0.20F, roof);
+        }
+        if (shinkansen) {
+            const float noseOffset = -alongSign * length * 0.47F;
+            box(x + (vehicle.facingX ? noseOffset : 0.0F), y + 0.30F,
+                z + (vehicle.facingX ? 0.0F : noseOffset),
+                vehicle.facingX ? 0.32F : 0.40F, 0.20F,
+                vehicle.facingX ? 0.40F : 0.32F, body);
+            box(x, y + 0.55F, z, length * 0.54F, 0.12F,
+                width * 0.78F, GXColor{32, 43, 54, 255});
+        }
     } else if (tender) {
         box(x, y + 0.33F, z, length * 0.84F, 0.38F,
             width * 0.90F, body);
@@ -487,7 +493,14 @@ void GxRenderer::drawVehicle(const TrainVehicle &vehicle)
             width * 0.88F, body);
         box(x, y + 0.61F, z, length * 0.88F, 0.08F,
             width * 0.94F, roof);
-        if (vehicle.type == GC_VEHICLE_HOPPER_CAR) {
+        if (passenger) {
+            box(x, y + 0.47F, z, length * 0.76F, 0.18F,
+                width * 0.84F, GXColor{32, 43, 54, 255});
+            if (shinkansen) {
+                box(x, y + 0.70F, z, length * 0.80F, 0.07F,
+                    width * 0.94F, body);
+            }
+        } else if (vehicle.type == GC_VEHICLE_HOPPER_CAR) {
             box(x, y + 0.10F, z, length * 0.60F, 0.18F,
                 width * 0.72F, body);
         } else if (vehicle.type == GC_VEHICLE_TANK_CAR) {
@@ -584,7 +597,9 @@ void GxRenderer::drawQuad(
 
 void GxRenderer::drawHud(GcBlock selectedBlock, bool paused,
                          bool inventoryOpen, GcTrackType selectedTrack,
-                         GcVehicleType selectedVehicle, bool vehicleSelected)
+                         GcVehicleType selectedVehicle, bool vehicleSelected,
+                         const Game &game, bool shulkerOpen,
+                         Position shulkerPosition, int activeShulkerSlot)
 {
     GX_SetNumTexGens(0);
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
@@ -635,11 +650,11 @@ void GxRenderer::drawHud(GcBlock selectedBlock, bool paused,
                      : (slot == 1 && !vehicleSelected
                             ? GXColor{137, 143, 149, 255}
                             : (slot == 2 && vehicleSelected
-                                   ? vehicleColor(selectedVehicle)
+                                   ? gxVehicleColor(selectedVehicle)
                                    : GXColor{92, 92, 92, 255})));
     }
     if (vehicleSelected) {
-        const GXColor color = vehicleColor(selectedVehicle);
+        const GXColor color = gxVehicleColor(selectedVehicle);
         drawQuad({{{startX, top - 7.0F}, {startX + slotSize, top - 7.0F},
                    {startX + slotSize, top - 3.0F}, {startX, top - 3.0F}}},
                  color);
@@ -653,7 +668,8 @@ void GxRenderer::drawHud(GcBlock selectedBlock, bool paused,
 
     if (paused || inventoryOpen) {
         const float panelWidth = std::min(width - 32.0F, 400.0F);
-        const float panelHeight = paused ? 110.0F : 190.0F;
+        const float panelHeight = paused ? 110.0F :
+                                  (shulkerOpen ? 210.0F : 190.0F);
         const float left = (width - panelWidth) * 0.5F;
         const float topPanel = (height - panelHeight) * 0.5F;
         drawQuad({{{left, topPanel}, {left + panelWidth, topPanel},
@@ -666,6 +682,42 @@ void GxRenderer::drawHud(GcBlock selectedBlock, bool paused,
                    {left + panelWidth - 12.0F, topPanel + 17.0F},
                    {left + 12.0F, topPanel + 17.0F}}}, accent);
         if (inventoryOpen) {
+            if (shulkerOpen) {
+                constexpr float cell = 30.0F;
+                constexpr float gap = 3.0F;
+                const float gridWidth = 9.0F * cell + 8.0F * gap;
+                const float gridLeft = (width - gridWidth) * 0.5F;
+                const float gridTop = topPanel + 34.0F;
+                for (int slotIndex = 0; slotIndex < 27; ++slotIndex) {
+                    const int column = slotIndex % 9;
+                    const int row = slotIndex / 9;
+                    const float x = gridLeft +
+                        static_cast<float>(column) * (cell + gap);
+                    const float y = gridTop +
+                        static_cast<float>(row) * (cell + gap);
+                    drawQuad({{{x, y}, {x + cell, y},
+                               {x + cell, y + cell}, {x, y + cell}}},
+                             slotIndex == activeShulkerSlot
+                                 ? GXColor{255, 233, 111, 255}
+                                 : GXColor{87, 92, 101, 255});
+                    glitchcraft::ShulkerStack stack;
+                    game.getShulkerSlot(
+                        shulkerPosition.x, shulkerPosition.y,
+                        shulkerPosition.z, slotIndex, stack);
+                    GXColor swatch{38, 42, 48, 255};
+                    if (stack.count > 0) {
+                        const TextureColor color = sampleTexture(
+                            blockTexture(stack.block, 0, 1, 0), 8, 8);
+                        swatch = GXColor{color.red, color.green, color.blue,
+                                         255};
+                    }
+                    drawQuad({{{x + 3.0F, y + 3.0F},
+                               {x + cell - 3.0F, y + 3.0F},
+                               {x + cell - 3.0F, y + cell - 3.0F},
+                               {x + 3.0F, y + cell - 3.0F}}}, swatch);
+                }
+                return;
+            }
             drawQuad({{{left + 24.0F, topPanel + 35.0F},
                        {left + panelWidth - 24.0F, topPanel + 35.0F},
                        {left + panelWidth - 24.0F, topPanel + 39.0F},

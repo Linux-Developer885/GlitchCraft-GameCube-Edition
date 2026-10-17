@@ -40,15 +40,13 @@ int main()
     GcVehicleType selectedVehicle = GC_VEHICLE_BIG_BOY;
     bool trackAxisX = true;
     bool inventoryOpen = false;
+    bool shulkerOpen = false;
+    glitchcraft::Position shulkerPosition{0, 0, 0};
+    int activeShulkerSlot = 0;
     bool running = true;
-    int selectedSlot = 0;
     int buildMode = 0;
     auto lastForwardTap = std::chrono::steady_clock::time_point::min();
     bool wasMovingForward = false;
-    const GcBlock blocks[5]{
-        GC_BLOCK_GRASS, GC_BLOCK_DIRT, GC_BLOCK_STONE,
-        GC_BLOCK_WOOD, GC_BLOCK_REDSTONE};
-
     while (running) {
         PAD_ScanPads();
         const u32 down = PAD_ButtonsDown(PAD_CHAN0);
@@ -79,17 +77,37 @@ int main()
         }
         if (!game.paused()) {
             if ((down & PAD_BUTTON_A) != 0U) {
-                if (buildMode == 2) {
+                if (shulkerOpen) {
+                    game.setShulkerSlot(
+                        shulkerPosition.x, shulkerPosition.y,
+                        shulkerPosition.z, activeShulkerSlot,
+                        GC_BLOCK_AIR, 0);
+                } else if (buildMode == 2) {
                     game.toggleTrainPower();
                 } else {
                     game.jump();
                 }
             }
             if ((down & PAD_BUTTON_X) != 0U) {
-                inventoryOpen = !inventoryOpen;
+                if (inventoryOpen) {
+                    inventoryOpen = false;
+                    shulkerOpen = false;
+                } else {
+                    const auto hit = game.castRay(
+                        game.yaw(), game.pitch(), 8.0F);
+                    if (hit.hit && !hit.track &&
+                        game.isShulkerBox(hit.position.x, hit.position.y,
+                                          hit.position.z)) {
+                        shulkerPosition = hit.position;
+                        activeShulkerSlot = 0;
+                        shulkerOpen = true;
+                    }
+                    inventoryOpen = true;
+                }
             }
             if ((down & PAD_BUTTON_B) != 0U) {
                 inventoryOpen = false;
+                shulkerOpen = false;
             }
             if ((down & PAD_TRIGGER_L) != 0U) {
                 if (buildMode == 1) {
@@ -104,14 +122,19 @@ int main()
                 game.mineBlock();
             }
             if ((down & PAD_BUTTON_UP) != 0U) {
-                if (inventoryOpen) {
+                if (inventoryOpen && !shulkerOpen) {
                     game.addTrainFuel(100);
-                } else {
+                } else if (!inventoryOpen) {
                     game.setFlying(!game.flying());
                 }
             }
             if ((down & PAD_BUTTON_Y) != 0U) {
-                if (inventoryOpen) {
+                if (shulkerOpen) {
+                    game.setShulkerSlot(
+                        shulkerPosition.x, shulkerPosition.y,
+                        shulkerPosition.z, activeShulkerSlot,
+                        selectedBlock, 64);
+                } else if (inventoryOpen) {
                     game.toggleTrackSwitch();
                 } else if (buildMode == 1) {
                     trackAxisX = !trackAxisX;
@@ -119,10 +142,21 @@ int main()
                     buildMode = (buildMode + 1) % 3;
                 }
             }
-            if ((down & PAD_BUTTON_RIGHT) != 0U && !inventoryOpen) {
+            if (inventoryOpen && shulkerOpen) {
+                if ((down & PAD_BUTTON_RIGHT) != 0U) {
+                    activeShulkerSlot = (activeShulkerSlot + 1) % 27;
+                }
+                if ((down & PAD_BUTTON_LEFT) != 0U) {
+                    activeShulkerSlot = (activeShulkerSlot + 26) % 27;
+                }
+            } else if ((down & PAD_BUTTON_RIGHT) != 0U && !inventoryOpen) {
                 if (buildMode == 0) {
-                    selectedSlot = (selectedSlot + 1) % 5;
-                    selectedBlock = blocks[selectedSlot];
+                    int selected = (static_cast<int>(selectedBlock) + 1) %
+                                   GC_BLOCK_COUNT;
+                    if (selected == GC_BLOCK_AIR) {
+                        selected = GC_BLOCK_GRASS;
+                    }
+                    selectedBlock = static_cast<GcBlock>(selected);
                 } else if (buildMode == 1) {
                     selectedTrack = static_cast<GcTrackType>(
                         (static_cast<int>(selectedTrack) + 1) % GC_TRACK_COUNT);
@@ -134,8 +168,11 @@ int main()
             }
             if ((down & PAD_BUTTON_LEFT) != 0U && !inventoryOpen) {
                 if (buildMode == 0) {
-                    selectedSlot = (selectedSlot + 4) % 5;
-                    selectedBlock = blocks[selectedSlot];
+                    int selected = static_cast<int>(selectedBlock) - 1;
+                    if (selected <= GC_BLOCK_AIR) {
+                        selected = GC_BLOCK_COUNT - 1;
+                    }
+                    selectedBlock = static_cast<GcBlock>(selected);
                 } else if (buildMode == 1) {
                     selectedTrack = static_cast<GcTrackType>(
                         (static_cast<int>(selectedTrack) + GC_TRACK_COUNT - 1) %
@@ -146,7 +183,7 @@ int main()
                          GC_VEHICLE_COUNT - 1) % GC_VEHICLE_COUNT);
                 }
             }
-            if (inventoryOpen) {
+            if (inventoryOpen && !shulkerOpen) {
                 if ((down & PAD_BUTTON_LEFT) != 0U) {
                     game.drinkMilk();
                 } else if ((down & PAD_BUTTON_RIGHT) != 0U) {
@@ -157,7 +194,8 @@ int main()
         }
 
         renderer.render(game, selectedBlock, game.paused(), inventoryOpen,
-                        selectedTrack, selectedVehicle, buildMode == 2);
+                        selectedTrack, selectedVehicle, buildMode == 2,
+                        shulkerOpen, shulkerPosition, activeShulkerSlot);
         if ((held & PAD_BUTTON_B) != 0U && game.paused()) {
             game.setPaused(false);
         }

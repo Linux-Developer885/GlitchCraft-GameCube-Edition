@@ -6,8 +6,13 @@ CC := $(PREFIX)gcc
 CXX := $(PREFIX)g++
 AS := $(PREFIX)gcc
 ELF2DOL := $(DEVKITPRO)/tools/bin/elf2dol
+OBJCOPY := $(DEVKITPPC)/bin/powerpc-eabi-objcopy
+PYTHON ?= python3
 
 TARGET := build/gamecube/glitchcraft
+APPLOADER_ELF := build/gamecube/apploader.elf
+APPLOADER_BIN := build/gamecube/apploader.bin
+IMAGE := build/gamecube/glitchcraft-1.0.iso
 SOURCES := src/engine.cpp \
            gamecube/src/main.cpp \
            GameEngine/platform/gamecube/gx_renderer.cpp \
@@ -23,19 +28,38 @@ CXXFLAGS := $(CFLAGS) -std=gnu++17 -fno-rtti
 LDFLAGS := $(ARCH) -Wl,--gc-sections
 LIBS := -L$(DEVKITPRO)/libogc/lib/cube -logc -lm
 
-.PHONY: all clean check-sdk
+.PHONY: all clean check-sdk image
 
-all: check-sdk $(TARGET).dol
+all: check-sdk $(TARGET).dol $(IMAGE)
 
 check-sdk:
 	@test -x "$(CXX)" || (echo "devkitPPC not found: install devkitPro gamecube-dev." >&2; exit 1)
+	@test -x "$(OBJCOPY)" || (echo "devkitPPC objcopy not found." >&2; exit 1)
 	@test -f "$(DEVKITPRO)/libogc/include/gccore.h" || (echo "libogc GX headers not found." >&2; exit 1)
+	@command -v "$(PYTHON)" >/dev/null 2>&1 || (echo "Python 3 is required to package the GameCube image." >&2; exit 1)
 
 $(TARGET).dol: $(TARGET).elf
 	$(ELF2DOL) $< $@
 
 $(TARGET).elf: $(OBJECTS)
 	$(CXX) $(LDFLAGS) -Wl,-Map,$(TARGET).map -o $@ $^ $(LIBS)
+
+$(APPLOADER_ELF): gamecube/apploader.c gamecube/apploader.ld
+	@mkdir -p $(dir $@)
+	$(CC) -DGEKKO -D__gamecube__ -mcpu=750 -meabi -mhard-float \
+		-ffreestanding -fno-builtin -fno-pic -fno-pie \
+		-fno-stack-protector -msdata=none -Os -Wall -Wextra \
+		-nostdlib -nostartfiles -Wl,-T,gamecube/apploader.ld \
+		-Wl,--build-id=none -o $@ gamecube/apploader.c -lgcc
+
+$(APPLOADER_BIN): $(APPLOADER_ELF)
+	$(OBJCOPY) -O binary --only-section=.text --only-section=.data $< $@
+
+$(IMAGE): $(TARGET).dol $(APPLOADER_BIN) scripts/make-gamecube-image.py
+	$(PYTHON) scripts/make-gamecube-image.py --dol $(TARGET).dol \
+		--apploader $(APPLOADER_BIN) --output $@
+
+image: check-sdk $(IMAGE)
 
 $(TARGET)/%.o: %.cpp
 	@mkdir -p $(dir $@)
